@@ -1,32 +1,134 @@
-<main class="max-w-7xl mx-auto px-6 pb-20">
-    <h3 class="text-zinc-400 text-xs font-bold uppercase tracking-widest mb-8">AI 风格匹配结果 (混合媒体)</h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        
-        <div class="motion-card glass rounded-2xl overflow-hidden group relative">
-            <div class="aspect-video bg-zinc-900 relative">
-                <video loop muted playsinline class="w-full h-full object-cover">
-                    <source src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJndXIzc3FzZ3ZicHpxZ3J6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD12/3o7TKMGpxN3EAnkzTi/giphy.mp4" type="video/mp4">
-                </video>
-                <div class="absolute top-2 right-2 px-2 py-1 bg-black/50 backdrop-blur text-[10px] rounded text-white">MP4</div>
-            </div>
-            <div class="p-4"><h4 class="text-sm">3D 液体流体交互</h4></div>
-        </div>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motiflow - AI 驱动动效搜索</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" type="module"></script>
+    <style>
+        body { font-family: sans-serif; background-color: #09090b; color: #f4f4f5; }
+        .glass { background: rgba(24, 24, 27, 0.4); backdrop-filter: blur(12px); border: 1px solid rgba(63, 63, 70, 0.3); }
+        .accent-gradient { background: linear-gradient(90deg, #6366f1, #a855f7); }
+        .result-card { display: none; } /* 初始隐藏，匹配后显示 */
+        .show { display: block !important; }
+    </style>
+</head>
+<body class="min-h-screen">
 
-        <div class="motion-card glass rounded-2xl overflow-hidden group relative">
-            <div class="aspect-video bg-zinc-900 flex items-center justify-center relative">
-                <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJndXIzc3FzZ3ZicHpxZ3J6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/l41lTfuxV5N93iRk4/giphy.gif" class="w-full h-full object-cover">
-                <div class="absolute top-2 right-2 px-2 py-1 bg-black/50 backdrop-blur text-[10px] rounded text-white">GIF</div>
-            </div>
-            <div class="p-4"><h4 class="text-sm">极简线条 Loading</h4></div>
+    <nav class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 accent-gradient rounded-lg flex items-center justify-center font-bold text-white">M</div>
+            <span class="text-xl font-bold tracking-tighter">MOTIFLOW AI</span>
         </div>
+    </nav>
 
-        <div class="motion-card glass rounded-2xl overflow-hidden group relative">
-            <div class="aspect-video bg-zinc-900 flex items-center justify-center relative">
-                <dotlottie-player src="https://lottie.host/809c3140-5e5d-4f01-8c46-24e6459392e2/fM6X9sB1uJ.json" background="transparent" speed="1" style="width: 100%; height: 100%;" hover loop></dotlottie-player>
-                <div class="absolute top-2 right-2 px-2 py-1 bg-black/50 backdrop-blur text-[10px] rounded text-white">Lottie</div>
+    <header class="max-w-4xl mx-auto pt-12 pb-8 px-6 text-center">
+        <div id="drop-zone" class="relative p-12 border-2 border-dashed border-zinc-700 rounded-[2.5rem] bg-zinc-900/30 transition-all hover:border-purple-500 group">
+            <input type="file" id="file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*">
+            <div id="status-ui">
+                <div class="text-4xl mb-4 group-hover:scale-110 transition">🖼️</div>
+                <h2 class="text-lg font-medium">拖入静态参考图</h2>
+                <p class="text-zinc-500 text-sm mt-2">AI 会根据视觉风格自动搜索动效</p>
             </div>
-            <div class="p-4"><h4 class="text-sm">搜索框微交互</h4></div>
+            <div id="ai-tags" class="mt-6 flex flex-wrap justify-center gap-2"></div>
         </div>
+    </header>
 
-    </div>
-</main>
+    <main class="max-w-7xl mx-auto px-6 pb-20">
+        <div id="results-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="result-card glass rounded-2xl overflow-hidden" data-tag="3d,玻璃,质感">
+                <video loop muted playsinline class="w-full aspect-video object-cover"><source src="https://cdn.pixabay.com/video/2020/09/11/49626-458905335_large.mp4" type="video/mp4"></video>
+                <div class="p-4 text-sm font-medium">3D 玻璃流体 (MP4)</div>
+            </div>
+
+            <div class="result-card glass rounded-2xl overflow-hidden" data-tag="简约,线条,加载">
+                <div class="aspect-video bg-zinc-900 flex items-center justify-center">
+                    <dotlottie-player src="https://lottie.host/809c3140-5e5d-4f01-8c46-24e6459392e2/fM6X9sB1uJ.json" background="transparent" speed="1" style="width: 100%; height: 100%;" loop autoplay></dotlottie-player>
+                </div>
+                <div class="p-4 text-sm font-medium">极简交互 (Lottie)</div>
+            </div>
+
+            <div class="result-card glass rounded-2xl overflow-hidden" data-tag="液态,色彩,渐变">
+                <img src="https://media.giphy.com/media/3o7TKMGpxN3EAnkzTi/giphy.gif" class="w-full aspect-video object-cover">
+                <div class="p-4 text-sm font-medium">液态渐变 (GIF)</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_KEY = "AIzaSyB9ww1axSGsO4iYUt9UaOOJiBAuoa0wYOQ"; // 你的灵魂钥匙
+        const fileInput = document.getElementById('file-input');
+        const aiTagsDiv = document.getElementById('ai-tags');
+        const statusUi = document.getElementById('status-ui');
+
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // 1. UI 反馈
+            statusUi.innerHTML = `<div class="animate-spin text-3xl mb-4">🌀</div><p class="text-purple-400">AI 正在深度解析风格元素...</p>`;
+            
+            // 2. 将图片转为 Base64 格式给 AI 看
+            const base64Image = await toBase64(file);
+            const pureBase64 = base64Image.split(',')[1];
+
+            // 3. 调用 Gemini Vision API
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: "请分析这张图的视觉风格和设计元素，只输出 3 个最核心的中文关键词，用逗号隔开。例如：3D,玻璃,极简" },
+                                { inline_data: { mime_type: "image/jpeg", data: pureBase64 } }
+                            ]
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                const tags = data.candidates[0].content.parts[0].text.trim().split(/[,，]/);
+                
+                // 4. 展示识别出的标签
+                showTags(tags);
+                // 5. 匹配动效库
+                matchResults(tags);
+
+            } catch (error) {
+                statusUi.innerHTML = `<p class="text-red-500">AI 掉线了，请检查网络或 Key</p>`;
+                console.error(error);
+            }
+        });
+
+        function toBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        function showTags(tags) {
+            statusUi.innerHTML = `<div class="text-3xl mb-2">✨</div><p class="text-zinc-300 font-medium">识别完成！</p>`;
+            aiTagsDiv.innerHTML = tags.map(tag => `<span class="px-3 py-1 bg-purple-500/20 text-purple-400 text-xs rounded-full border border-purple-500/30">${tag}</span>`).join('');
+        }
+
+        function matchResults(aiTags) {
+            const cards = document.querySelectorAll('.result-card');
+            cards.forEach(card => {
+                const cardTags = card.getAttribute('data-tag');
+                // 只要 AI 标签中有任何一个包含在卡片标签里，就显示
+                const isMatch = aiTags.some(tag => cardTags.includes(tag.trim()));
+                if (isMatch) {
+                    card.classList.add('show');
+                    if(card.querySelector('video')) card.querySelector('video').play();
+                } else {
+                    card.classList.remove('show');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
