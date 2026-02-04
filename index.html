@@ -2,163 +2,112 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Motiflow - AI 智能动效搜索</title>
+    <title>Motiflow AI - 智能动效搜索引擎</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" type="module"></script>
     <style>
         body { font-family: sans-serif; background-color: #050505; color: #f4f4f5; }
-        .glass { background: rgba(20, 20, 20, 0.6); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glass { background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); }
         .accent-gradient { background: linear-gradient(90deg, #6366f1, #a855f7); }
-        .result-card { display: none; transition: all 0.5s ease; }
-        .show { display: block !important; animation: fadeInUp 0.5s ease forwards; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .grid-item { animation: fadeIn 0.8s ease forwards; opacity: 0; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="min-h-screen">
 
-    <nav class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
+    <nav class="glass sticky top-0 z-50 px-8 py-4 flex justify-between items-center">
         <div class="flex items-center gap-2">
-            <div class="w-8 h-8 accent-gradient rounded-lg flex items-center justify-center font-bold text-white italic">M</div>
-            <span class="text-xl font-bold tracking-tighter">MOTIFLOW</span>
+            <div class="w-8 h-8 accent-gradient rounded-lg flex items-center justify-center font-bold">M</div>
+            <span class="text-xl font-bold tracking-tighter">MOTIFLOW AI</span>
         </div>
-        <div id="connection-status" class="text-[10px] text-zinc-500 font-mono flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> 系统就绪
-        </div>
+        <div class="text-[10px] text-zinc-500 font-mono">POWERED BY GEMINI 1.5 FLASH</div>
     </nav>
 
-    <section class="max-w-4xl mx-auto pt-16 pb-12 px-6">
-        <div id="drop-zone" class="relative p-12 border-2 border-dashed border-zinc-800 rounded-[2.5rem] bg-zinc-900/20 text-center transition-all hover:border-purple-500 group">
-            <input type="file" id="file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*">
+    <header class="max-w-4xl mx-auto pt-16 pb-12 px-6">
+        <div id="drop-zone" class="relative p-16 border-2 border-dashed border-zinc-800 rounded-[3rem] bg-zinc-900/20 text-center hover:border-purple-500 transition-all cursor-pointer">
+            <input type="file" id="file-input" class="hidden" accept="image/*">
             <div id="status-ui">
-                <div class="text-5xl mb-4 group-hover:scale-110 transition duration-500">🌌</div>
-                <h2 class="text-xl font-medium">拖入图片开始 AI 搜寻</h2>
-                <p class="text-zinc-500 text-sm mt-3">支持识别色彩、质感及构图元素</p>
+                <div class="text-6xl mb-6">🔍</div>
+                <h2 class="text-2xl font-bold mb-2">上传参考图，AI 找动效</h2>
+                <p class="text-zinc-500">Gemini 将分析风格并检索全网相似 MP4/GIF</p>
             </div>
             <div id="ai-tags" class="mt-8 flex flex-wrap justify-center gap-2"></div>
         </div>
-    </section>
+    </header>
 
-    <main class="max-w-7xl mx-auto px-6 pb-24">
-        <div class="flex items-center justify-between mb-10">
-            <h3 class="text-zinc-400 text-xs font-bold uppercase tracking-widest">匹配结果预览</h3>
-            <span class="text-[10px] text-zinc-600">根据 AI 提取的关键词智能筛选</span>
-        </div>
-        
+    <main class="max-w-7xl mx-auto px-6 pb-32">
         <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div class="result-card glass rounded-[2rem] overflow-hidden" data-tag="3D,质感,玻璃,渐变,流体">
-                <div class="aspect-video bg-zinc-900 relative group">
-                    <video loop muted playsinline class="w-full h-full object-cover">
-                        <source src="https://cdn.pixabay.com/video/2020/09/11/49626-458905335_large.mp4" type="video/mp4">
-                    </video>
-                </div>
-                <div class="p-6 flex justify-between items-center">
-                    <div><h4 class="text-sm font-semibold">3D 磨砂玻璃流体</h4><p class="text-[10px] text-zinc-500 mt-1 uppercase">MP4 Reference</p></div>
-                </div>
             </div>
-
-            <div class="result-card glass rounded-[2rem] overflow-hidden" data-tag="简约,线条,加载,交互,UI">
-                <div class="aspect-video bg-zinc-900 flex items-center justify-center">
-                    <dotlottie-player src="https://lottie.host/809c3140-5e5d-4f01-8c46-24e6459392e2/fM6X9sB1uJ.json" background="transparent" speed="1.2" style="width: 150px; height: 150px;" loop autoplay></dotlottie-player>
-                </div>
-                <div class="p-6 flex justify-between items-center border-t border-white/5">
-                    <div><h4 class="text-sm font-semibold">极简搜索反馈</h4><p class="text-[10px] text-zinc-500 mt-1 uppercase">Lottie Files</p></div>
-                </div>
-            </div>
-
-            <div class="result-card glass rounded-[2rem] overflow-hidden" data-tag="液态,梦幻,色彩,抽象,GIF">
-                <div class="aspect-video bg-zinc-900 overflow-hidden">
-                    <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJndXIzc3FzZ3ZicHpxZ3J6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9iZCZjdD1n/l41lTfuxV5N93iRk4/giphy.gif" class="w-full h-full object-cover">
-                </div>
-                <div class="p-6 flex justify-between items-center border-t border-white/5">
-                    <div><h4 class="text-sm font-semibold">弥散色彩背景</h4><p class="text-[10px] text-zinc-500 mt-1 uppercase">High-res GIF</p></div>
-                </div>
-            </div>
-        </div>
     </main>
 
     <script>
-        // 配置区
-        const API_KEY = "AIzaSyB9ww1axSGsO4iYUt9UaOOJiBAuoa0wYOQ"; 
-        const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
-        
+        const GEMINI_KEY = "AIzaSyB9ww1axSGsO4iYUt9UaOOJiBAuoa0wYOQ";
+        // GIPHY API 用于搜索真实的动态参考库
+        const GIPHY_KEY = "dc6zaTOxFJmzC"; // 公用测试 Key
+
         const fileInput = document.getElementById('file-input');
+        const dropZone = document.getElementById('drop-zone');
         const aiTagsDiv = document.getElementById('ai-tags');
         const statusUi = document.getElementById('status-ui');
+        const resultsGrid = document.getElementById('results-grid');
+
+        dropZone.onclick = () => fileInput.click();
 
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
-            // 1. UI 开始转圈
-            statusUi.innerHTML = `<div class="animate-spin text-3xl mb-4">🌀</div><p class="text-purple-400 font-medium tracking-widest">AI NEURAL PROCESSING...</p>`;
-            aiTagsDiv.innerHTML = "";
-
+            statusUi.innerHTML = `<div class="animate-bounce text-4xl mb-4">🧠</div><p class="text-purple-400 font-bold">AI 正在深度解析视觉特征...</p>`;
+            
             try {
-                const base64Image = await toBase64(file);
-                const pureBase64 = base64Image.split(',')[1];
+                const base64 = await toBase64(file);
+                const pureBase64 = base64.split(',')[1];
 
-                // 2. 尝试调用真实 AI
-                const response = await fetch(API_URL, {
+                // 1. 调用 Gemini 识别图片风格
+                const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{
-                            parts: [
-                                { text: "分析图片视觉特征。只输出3个核心词，用英文逗号分隔。选项：3D,质感,玻璃,渐变,流体,简约,线条,加载,交互,UI,液态,梦幻,色彩,抽象" },
-                                { inline_data: { mime_type: "image/jpeg", data: pureBase64 } }
-                            ]
-                        }]
+                        contents: [{ parts: [
+                            { text: "Describe this image style in 3 English keywords for animation search, like 'liquid, neon, 3d'. Only output keywords separated by comma." },
+                            { inline_data: { mime_type: "image/jpeg", data: pureBase64 } }
+                        ]}]
                     })
                 });
 
-                if (!response.ok) throw new Error('API_UNAVAILABLE');
-
-                const data = await response.json();
-                const tags = data.candidates[0].content.parts[0].text.trim().split(/[,，]/);
+                const data = await geminiRes.json();
+                const keywords = data.candidates[0].content.parts[0].text.trim();
                 
-                handleSuccess(tags);
+                // 2. 显示 AI 提取的关键词
+                aiTagsDiv.innerHTML = keywords.split(',').map(k => `<span class="px-3 py-1 bg-purple-500/20 text-purple-400 text-xs rounded-full border border-purple-500/30 font-mono">${k.trim()}</span>`).join('');
+                
+                // 3. 根据关键词去全网搜索真实动效
+                searchMotion(keywords);
 
-            } catch (error) {
-                console.warn("AI 模式受限，已自动切换至【本地离线分析模式】");
-                // 3. 降级方案：模拟成功
-                setTimeout(() => {
-                    const fallbackTags = ["3D", "渐变", "UI"];
-                    handleSuccess(fallbackTags, true);
-                }, 1500);
+            } catch (err) {
+                statusUi.innerHTML = `<div class="text-red-500">本地网络受限，请提交到 GitHub 并在 Vercel 打开</div>`;
             }
         });
 
-        function handleSuccess(tags, isFallback = false) {
-            statusUi.innerHTML = `
-                <div class="text-3xl mb-2">✨</div>
-                <p class="text-zinc-300 font-medium">${isFallback ? '离线模式分析完成' : 'AI 深度识别成功'}</p>
-            `;
-            aiTagsDiv.innerHTML = tags.map(tag => `<span class="px-3 py-1 bg-white/5 text-zinc-300 text-[10px] rounded-full border border-white/10 uppercase tracking-tighter">${tag.trim()}</span>`).join('');
-            matchResults(tags);
-        }
-
-        function matchResults(aiTags) {
-            const cards = document.querySelectorAll('.result-card');
-            let found = false;
-            cards.forEach(card => {
-                const cardTags = card.getAttribute('data-tag');
-                const isMatch = aiTags.some(tag => cardTags.includes(tag.trim()));
-                if (isMatch) {
-                    card.classList.add('show');
-                    const video = card.querySelector('video');
-                    if(video) video.play();
-                    found = true;
-                } else {
-                    card.classList.remove('show');
-                }
-            });
+        async function searchMotion(query) {
+            statusUi.innerHTML = `<div class="text-3xl mb-2">✨</div><p class="text-zinc-300">已匹配最接近的动效参考</p>`;
             
-            // 如果一个都没匹配上，就随机显示两个，增加“有结果”的体感
-            if (!found) {
-                cards[0].classList.add('show');
-                cards[1].classList.add('show');
-            }
+            // 调用 Giphy API 搜索动态资源
+            const res = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(query)}&limit=9`);
+            const { data } = await res.json();
+
+            resultsGrid.innerHTML = data.map((item, index) => `
+                <div class="glass rounded-[2rem] overflow-hidden grid-item" style="animation-delay: ${index * 0.1}s">
+                    <div class="aspect-video bg-zinc-900">
+                        <video loop muted playsinline onmouseover="this.play()" onmouseout="this.pause()" class="w-full h-full object-cover">
+                            <source src="${item.images.looping.mp4}" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="p-4 flex justify-between items-center">
+                        <span class="text-[10px] text-zinc-500 uppercase tracking-widest">${query.split(',')[0]} STYLE</span>
+                        <a href="${item.url}" target="_blank" class="text-zinc-600 hover:text-white">🔗</a>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function toBase64(file) {
