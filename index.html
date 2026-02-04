@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motiflow - 动效灵感搜寻</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #09090b; color: #f4f4f5; }
+        .glass { background: rgba(24, 24, 27, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(63, 63, 70, 0.5); }
+        .accent-gradient { background: linear-gradient(90deg, #6366f1, #a855f7); }
+        .card-hover:hover { border-color: #a855f7; transform: translateY(-4px); transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <nav class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 accent-gradient rounded-lg flex items-center justify-center font-bold">M</div>
+            <span class="text-xl font-semibold tracking-tight">Motiflow</span>
+        </div>
+        <div class="hidden md:flex gap-8 text-sm text-zinc-400">
+            <a href="#" class="hover:text-white transition">探索灵感</a>
+            <a href="#" class="hover:text-white transition">技术分类</a>
+            <a href="#" class="hover:text-white transition">我的收藏</a>
+        </div>
+        <button class="px-4 py-2 rounded-full bg-zinc-100 text-black text-sm font-medium hover:bg-white transition">开始使用</button>
+    </nav>
+
+    <header class="max-w-6xl mx-auto pt-20 pb-12 px-6 text-center">
+        <h1 class="text-4xl md:text-6xl font-bold mb-6">快速寻找下一个<br><span class="text-transparent bg-clip-text accent-gradient">丝滑动效参考</span></h1>
+        <div class="relative max-w-2xl mx-auto">
+            <input type="text" placeholder="搜索组件名称，如 'Loading' 或 'Button'..." 
+                   class="w-full px-6 py-4 rounded-2xl glass border-zinc-700 focus:outline-none focus:ring-2 focus:ring-purple-500 text-lg">
+            <kbd class="absolute right-4 top-4 px-2 py-1 bg-zinc-800 rounded text-xs text-zinc-500 border border-zinc-700">Enter</kbd>
+        </div>
+        
+        <div class="flex flex-wrap justify-center gap-3 mt-8">
+            <span class="px-4 py-1.5 rounded-full accent-gradient text-sm cursor-pointer">Trending</span>
+            <span class="px-4 py-1.5 rounded-full glass text-sm hover:border-zinc-500 cursor-pointer transition">CSS Only</span>
+            <span class="px-4 py-1.5 rounded-full glass text-sm hover:border-zinc-500 cursor-pointer transition">Framer Motion</span>
+            <span class="px-4 py-1.5 rounded-full glass text-sm hover:border-zinc-500 cursor-pointer transition">SVG Animation</span>
+            <span class="px-4 py-1.5 rounded-full glass text-sm hover:border-zinc-500 cursor-pointer transition">GSAP</span>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 pb-20">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <div class="glass p-4 rounded-2xl card-hover group cursor-pointer">
+                <div class="aspect-video rounded-xl mb-4 overflow-hidden bg-zinc-900 flex items-center justify-center border border-zinc-800">
+                    <div class="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-medium">Infinite Loader</h3>
+                        <p class="text-xs text-zinc-500">来源: LottieFiles</p>
+                    </div>
+                    <span class="text-[10px] px-2 py-1 rounded bg-zinc-800 text-zinc-400">CSS</span>
+                </div>
+            </div>
+
+            <div class="glass p-4 rounded-2xl card-hover group cursor-pointer">
+                <div class="aspect-video rounded-xl mb-4 overflow-hidden bg-zinc-900 flex items-center justify-center border border-zinc-800 relative">
+                    <div class="w-16 h-16 bg-gradient-to-tr from-blue-500 to-purple-600 rounded-lg animate-pulse shadow-[0_0_20px_rgba(168,85,247,0.4)]"></div>
+                </div>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-medium">Glassmorphism Card</h3>
+                        <p class="text-xs text-zinc-500">来源: Framer</p>
+                    </div>
+                    <span class="text-[10px] px-2 py-1 rounded bg-zinc-800 text-zinc-400">React</span>
+                </div>
+            </div>
+
+            <div class="glass p-4 rounded-2xl card-hover group cursor-pointer">
+                <div class="aspect-video rounded-xl mb-4 overflow-hidden bg-zinc-900 flex items-center justify-center border border-zinc-800">
+                    <div class="flex gap-2">
+                        <div class="w-3 h-3 bg-zinc-700 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                        <div class="w-3 h-3 bg-zinc-700 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                        <div class="w-3 h-3 bg-zinc-700 rounded-full animate-bounce" style="animation-delay: 0.3s"></div>
+                    </div>
+                </div>
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-medium">Staggered Dots</h3>
+                        <p class="text-xs text-zinc-500">来源: CodePen</p>
+                    </div>
+                    <span class="text-[10px] px-2 py-1 rounded bg-zinc-800 text-zinc-400">SVG</span>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="border-t border-zinc-800 py-10 text-center text-zinc-500 text-sm">
+        <p>© 2026 Motiflow - 你的动效灵感站</p>
+    </footer>
+
+</body>
+</html>
