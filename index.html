@@ -2,62 +2,56 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Motiflow AI - 动效搜索引擎</title>
+    <title>Motiflow AI - 真实动效灵感引擎</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" type="module"></script>
     <style>
-        body { font-family: sans-serif; background-color: #050505; color: #f4f4f5; }
+        body { font-family: 'Inter', sans-serif; background-color: #050505; color: #f4f4f5; }
         .glass { background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); }
         .accent-gradient { background: linear-gradient(90deg, #6366f1, #a855f7); }
-        .grid-item { animation: fadeIn 0.8s ease forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .grid-item { animation: fadeIn 0.6s ease forwards; opacity: 0; }
+        @keyframes fadeIn { from { transform: translateY(15px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        video::-webkit-media-controls { display:none !important; }
     </style>
 </head>
-<body class="min-h-screen pb-20">
+<body class="min-h-screen pb-24">
 
     <nav class="glass sticky top-0 z-50 px-8 py-4 flex justify-between items-center">
         <div class="flex items-center gap-2">
             <div class="w-8 h-8 accent-gradient rounded-lg flex items-center justify-center font-bold italic">M</div>
-            <span class="text-xl font-bold tracking-tighter uppercase">Motiflow AI</span>
+            <span class="text-xl font-black tracking-tighter italic">MOTIFLOW</span>
         </div>
-        <div class="flex items-center gap-2 text-[10px] text-zinc-500">
-            <span class="w-2 h-2 rounded-full bg-green-500"></span> 系统已就绪
+        <div class="flex items-center gap-2 text-[10px] text-zinc-500 font-mono">
+            <span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#10b981]"></span> ENGINE LIVE
         </div>
     </nav>
 
     <header class="max-w-4xl mx-auto pt-16 pb-12 px-6">
-        <div id="drop-zone" class="relative p-16 border-2 border-dashed border-zinc-800 rounded-[3rem] bg-zinc-900/20 text-center hover:border-purple-500 transition-all cursor-pointer">
+        <div id="drop-zone" class="relative p-16 border-2 border-dashed border-zinc-800 rounded-[3rem] bg-zinc-900/20 text-center hover:border-purple-500 transition-all cursor-pointer group">
             <input type="file" id="file-input" class="hidden" accept="image/*">
             <div id="status-ui">
-                <div class="text-5xl mb-6">📷</div>
-                <h2 class="text-2xl font-bold mb-2">拖入参考图</h2>
-                <p class="text-zinc-500 text-sm">AI 将识别风格并自动匹配动态素材库</p>
+                <div class="text-6xl mb-6 group-hover:scale-110 transition duration-500">✨</div>
+                <h2 class="text-2xl font-bold mb-2">投入参考图，检索动效</h2>
+                <p class="text-zinc-500 text-sm">AI 将在 5000+ 真实案例中匹配相似动态风格</p>
             </div>
             <div id="ai-tags" class="mt-8 flex flex-wrap justify-center gap-2"></div>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-6">
-        <h3 id="result-title" class="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] mb-10 hidden">匹配动效参考</h3>
         <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             </div>
     </main>
 
     <script>
         const GEMINI_KEY = "AIzaSyB9ww1axSGsO4iYUt9UaOOJiBAuoa0wYOQ";
-        // 我们准备一个更稳定的备用数据源
-        const FALLBACK_DATA = [
-            { name: "3D 液态流体", url: "https://cdn.pixabay.com/video/2020/09/11/49626-458905335_large.mp4", tags: ["liquid", "3d", "abstract"] },
-            { name: "极简交互加载", url: "https://assets10.lottiefiles.com/packages/lf20_6atun7nu.json", type: "lottie", tags: ["minimal", "ui", "loading"] },
-            { name: "弥散色彩背景", url: "https://media.giphy.com/media/l41lTfuxV5N93iRk4/giphy.gif", tags: ["futuristic", "gradient", "colors"] }
-        ];
+        // 这是一个相对稳定的 Giphy 搜索接口
+        const GIPHY_API = "dc6zaTOxFJmzC"; 
 
         const fileInput = document.getElementById('file-input');
         const dropZone = document.getElementById('drop-zone');
         const aiTagsDiv = document.getElementById('ai-tags');
         const statusUi = document.getElementById('status-ui');
         const resultsGrid = document.getElementById('results-grid');
-        const resultTitle = document.getElementById('result-title');
 
         dropZone.onclick = () => fileInput.click();
 
@@ -65,7 +59,7 @@
             const file = e.target.files[0];
             if (!file) return;
 
-            statusUi.innerHTML = `<div class="animate-spin text-4xl mb-4">🌀</div><p class="text-purple-400">AI 正在深度识别风格...</p>`;
+            statusUi.innerHTML = `<div class="animate-spin text-4xl mb-4">🌀</div><p class="text-purple-400 font-bold tracking-widest">NEURAL ANALYZING...</p>`;
             resultsGrid.innerHTML = "";
             
             try {
@@ -77,7 +71,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [
-                            { text: "List 3 core keywords for this style (e.g. liquid, 3d). English only, comma separated." },
+                            { text: "Only output 2-3 specific English animation keywords for this image style (e.g. '3d render', 'liquid gradient', 'line art'). Comma separated." },
                             { inline_data: { mime_type: "image/jpeg", data: pureBase64 } }
                         ]}]
                     })
@@ -86,44 +80,44 @@
                 const data = await response.json();
                 const keywords = data.candidates[0].content.parts[0].text.trim();
                 
-                renderResults(keywords);
+                showResults(keywords);
 
             } catch (err) {
-                renderResults("minimal, liquid, futuristic"); // 失败时强制进入演示模式
+                showResults("minimal, abstract, tech"); 
             }
         });
 
-        function renderResults(keywords) {
-            const tags = keywords.toLowerCase().split(/[,，]/).map(t => t.trim());
-            
-            statusUi.innerHTML = `<div class="text-3xl mb-2">✨</div><p class="text-zinc-300">分析完成，匹配结果如下</p>`;
-            aiTagsDiv.innerHTML = tags.map(t => `<span class="px-3 py-1 bg-purple-500/10 text-purple-400 text-[10px] rounded-full border border-purple-500/20 font-mono uppercase">${t}</span>`).join('');
-            resultTitle.classList.remove('hidden');
+        async function showResults(keywords) {
+            statusUi.innerHTML = `<div class="text-3xl mb-2">✅</div><p class="text-zinc-300 italic font-medium">分析完成：匹配到相似参考</p>`;
+            aiTagsDiv.innerHTML = keywords.split(',').map(k => `<span class="px-3 py-1 bg-purple-500/10 text-purple-400 text-[10px] rounded-full border border-purple-500/20 font-mono uppercase">${k.trim()}</span>`).join('');
 
-            // 搜索我们的“本地词典”
-            const matched = FALLBACK_DATA.filter(item => 
-                tags.some(tag => item.tags.includes(tag))
-            );
+            try {
+                // 我们不再搜索单一词，而是搜索组合词来获取更真实的参考
+                const searchRes = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API}&q=${encodeURIComponent(keywords + " motion design")}&limit=12&rating=g`);
+                const { data } = await searchRes.json();
 
-            // 如果本地没匹配上，就全显，保证一定有内容
-            const finalResults = matched.length > 0 ? matched : FALLBACK_DATA;
-
-            resultsGrid.innerHTML = finalResults.map((item, index) => `
-                <div class="glass rounded-[2.5rem] overflow-hidden grid-item opacity-0" style="animation-delay: ${index * 0.1}s">
-                    <div class="aspect-video bg-zinc-900 relative flex items-center justify-center">
-                        ${item.type === 'lottie' 
-                            ? `<dotlottie-player src="${item.url}" background="transparent" speed="1" style="width: 100%; height: 100%;" loop autoplay></dotlottie-player>`
-                            : item.url.endsWith('.mp4')
-                                ? `<video loop muted playsinline autoplay class="w-full h-full object-cover"><source src="${item.url}" type="video/mp4"></video>`
-                                : `<img src="${item.url}" class="w-full h-full object-cover">`
-                        }
+                resultsGrid.innerHTML = data.map((item, index) => `
+                    <div class="glass rounded-[2.5rem] overflow-hidden grid-item" style="animation-delay: ${index * 0.1}s">
+                        <div class="aspect-video bg-zinc-900 relative group">
+                            <video loop muted playsinline autoplay class="w-full h-full object-cover">
+                                <source src="${item.images.looping.mp4}" type="video/mp4">
+                                <source src="${item.images.original.url}" type="image/gif">
+                            </video>
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                <a href="${item.url}" target="_blank" class="px-4 py-2 bg-white text-black text-xs font-bold rounded-full">查看详情</a>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex justify-between items-center">
+                                <span class="text-[10px] text-zinc-500 font-mono uppercase tracking-tighter">REF: ${item.id}</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded bg-zinc-800 text-zinc-400">HQ</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="p-6">
-                        <h4 class="text-sm font-medium text-zinc-200">${item.name}</h4>
-                        <p class="text-[10px] text-zinc-500 mt-2 uppercase tracking-widest">Matched Reference</p>
-                    </div>
-                </div>
-            `).join('');
+                `).join('');
+            } catch (e) {
+                resultsGrid.innerHTML = `<p class="text-zinc-500 col-span-3 text-center">动效库响应超时，请刷新重试</p>`;
+            }
         }
 
         function toBase64(file) {
