@@ -10,17 +10,19 @@
         .accent-gradient { background: linear-gradient(90deg, #6366f1, #a855f7); }
         .grid-item { animation: fadeIn 0.6s ease forwards; opacity: 0; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* 强制视频充满容器 */
+        .video-container video { width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
 <body class="min-h-screen">
 
     <nav class="glass sticky top-0 z-50 px-8 py-4 flex justify-between items-center border-b border-white/5">
         <div class="flex items-center gap-2">
-            <div class="w-8 h-8 accent-gradient rounded-lg flex items-center justify-center font-bold">M</div>
-            <span class="text-xl font-bold tracking-tighter uppercase italic">Motiflow AI</span>
+            <div class="w-8 h-8 accent-gradient rounded-lg flex items-center justify-center font-bold italic">M</div>
+            <span class="text-xl font-bold tracking-tighter uppercase italic text-white">Motiflow AI</span>
         </div>
-        <div id="api-status" class="text-[10px] text-zinc-500 font-mono flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-green-500"></span> ENGINE ACTIVE
+        <div class="text-[10px] text-zinc-500 font-mono flex items-center gap-2 uppercase tracking-widest">
+            <span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]"></span> 实时引擎已连接
         </div>
     </nav>
 
@@ -29,22 +31,22 @@
             <input type="file" id="file-input" class="hidden" accept="image/*">
             <div id="status-ui">
                 <div class="text-6xl mb-6 group-hover:scale-110 transition duration-500">🌌</div>
-                <h2 class="text-2xl font-bold mb-2">上传参考图，AI 搜寻全网</h2>
-                <p class="text-zinc-500 text-sm">Gemini AI 将为您检索全球相似的动态设计参考</p>
+                <h2 class="text-2xl font-bold mb-2">上传参考图，AI 搜索相似动效</h2>
+                <p class="text-zinc-500 text-sm italic">AI 将为您检索全球海量动态设计参考</p>
             </div>
             <div id="ai-tags" class="mt-8 flex flex-wrap justify-center gap-2"></div>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-6 pb-32">
-        <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-center">
+        <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             </div>
     </main>
 
     <script>
         // 配置区 - 保持你的 Key 不变
         const GEMINI_KEY = "AIzaSyB9ww1axSGsO4iYUt9UaOOJiBAuoa0wYOQ";
-        const GIPHY_KEY = "dc6zaTOxFJmzC"; 
+        const GIPHY_KEY = "dc6zaTOxFJmzC"; // 公用测试 Key
 
         const fileInput = document.getElementById('file-input');
         const dropZone = document.getElementById('drop-zone');
@@ -58,7 +60,6 @@
             const file = e.target.files[0];
             if (!file) return;
 
-            // UI 状态重置
             statusUi.innerHTML = `<div class="animate-spin text-4xl mb-4">🌀</div><p class="text-purple-400 font-bold uppercase tracking-widest">Neural Analyzing...</p>`;
             resultsGrid.innerHTML = "";
             aiTagsDiv.innerHTML = "";
@@ -74,65 +75,62 @@
                     body: JSON.stringify({
                         contents: [{
                             parts: [
-                                { text: "Pick 3 English design keywords for this style (e.g. liquid, 3d, minimal). Output only keywords, separated by comma." },
+                                { text: "Describe this image style in 3 English design keywords (e.g. liquid, 3d, minimal). Output ONLY keywords separated by comma." },
                                 { inline_data: { mime_type: "image/jpeg", data: pureBase64 } }
                             ]
                         }]
                     })
                 });
 
-                if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+                if (!response.ok) throw new Error("API_ERROR");
 
                 const data = await response.json();
                 const keywords = data.candidates[0].content.parts[0].text.trim().toLowerCase();
                 
-                // 2. 显示标签
-                renderTags(keywords);
-                // 3. 实时搜索动效
+                showTags(keywords);
                 searchMotion(keywords);
 
             } catch (err) {
-                console.error(err);
-                statusUi.innerHTML = `<p class="text-red-500">API 连接失败: ${err.message}<br>请确保在 Vercel 或海外网络下打开</p>`;
+                statusUi.innerHTML = `<p class="text-red-500 font-bold">API 连接受限。请确保在 Vercel 部署后打开。</p>`;
             }
         });
 
         async function searchMotion(query) {
-            statusUi.innerHTML = `<div class="text-3xl mb-2">✨</div><p class="text-zinc-300">匹配完成：锁定动态参考流</p>`;
+            statusUi.innerHTML = `<div class="text-3xl mb-2">✨</div><p class="text-zinc-300">已匹配最接近的动态参考</p>`;
             
             try {
-                // 搜索关键词增加 "motion design" 以确保结果专业
-                const searchRes = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(query + " motion design")}&limit=12&rating=g`);
-                const { data } = await searchRes.json();
+                // 拼接 "motion design" 提高搜索精准度
+                const res = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(query + " motion design")}&limit=12&rating=g`);
+                const { data } = await res.json();
 
                 if (data.length === 0) {
-                    resultsGrid.innerHTML = `<p class="col-span-3 text-zinc-500 py-10">未找到匹配项，请换一张图试试</p>`;
+                    resultsGrid.innerHTML = `<p class="col-span-3 text-zinc-500 text-center py-10 uppercase tracking-widest">未找到匹配项</p>`;
                     return;
                 }
 
                 resultsGrid.innerHTML = data.map((item, index) => `
                     <div class="glass rounded-[2rem] overflow-hidden grid-item" style="animation-delay: ${index * 0.1}s">
-                        <div class="aspect-video bg-zinc-900 relative">
-                            <video loop muted playsinline autoplay class="w-full h-full object-cover">
+                        <div class="aspect-video bg-zinc-900 video-container relative group">
+                            <video loop muted playsinline autoplay class="group-hover:scale-105 transition duration-500">
                                 <source src="${item.images.looping.mp4}" type="video/mp4">
                                 <img src="${item.images.original.url}" class="w-full h-full object-cover">
                             </video>
                         </div>
-                        <div class="p-5 flex justify-between items-center text-[10px] text-zinc-600">
-                            <span class="uppercase tracking-widest font-mono">${query.split(',')[0]} STYLE</span>
-                            <a href="${item.url}" target="_blank" class="hover:text-white transition">SOURCE ↗</a>
+                        <div class="p-6 flex justify-between items-center">
+                            <span class="text-[10px] text-zinc-500 uppercase font-mono tracking-tighter">${query.split(',')[0]} STYLE</span>
+                            <a href="${item.url}" target="_blank" class="text-[9px] px-3 py-1 bg-white/5 rounded-full hover:bg-white/10 transition border border-white/10">SOURCE ↗</a>
                         </div>
                     </div>
                 `).join('');
 
             } catch (e) {
-                resultsGrid.innerHTML = `<p class="col-span-3 text-zinc-500">动效库加载失败</p>`;
+                resultsGrid.innerHTML = `<p class="col-span-3 text-zinc-500 text-center">动效库连接失败</p>`;
             }
         }
 
-        function renderTags(keywords) {
+        function showTags(keywords) {
             const tags = keywords.split(/[,，]/);
-            aiTagsDiv.innerHTML = tags.map(t => `<span class="px-3 py-1 bg-white/5 text-purple-400 text-[10px] rounded-full border border-purple-500/20 font-bold uppercase tracking-widest">${t.trim()}</span>`).join('');
+            aiTagsDiv.innerHTML = tags.map(t => `<span class="px-3 py-1 bg-purple-500/10 text-purple-400 text-[10px] rounded-full border border-purple-500/20 font-bold uppercase tracking-widest">${t.trim()}</span>`).join('');
         }
 
         function toBase64(file) {
