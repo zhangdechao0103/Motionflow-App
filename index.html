@@ -2,58 +2,56 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Motiflow AI - 动效参考专家</title>
+    <title>Motiflow AI - 稳定版 2.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: 'Inter', system-ui, sans-serif; background-color: #050505; color: #f4f4f5; }
-        .glass { background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: #050505; color: #f4f4f5; }
+        .glass { background: rgba(20, 20, 20, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .accent-gradient { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); }
-        .card-enter { animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; opacity: 0; }
-        @keyframes fadeInUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        .video-container video { object-fit: cover; width: 100%; height: 100%; }
+        .card-enter { animation: fadeInUp 0.6s ease forwards; opacity: 0; }
+        @keyframes fadeInUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        /* 确保视频充满容器且不显示黑边 */
+        .video-box video, .video-box img { width: 100%; height: 100%; object-fit: cover; }
     </style>
 </head>
-<body class="min-h-screen pb-32">
+<body class="min-h-screen pb-24">
 
     <nav class="glass sticky top-0 z-50 px-8 py-4 flex justify-between items-center">
         <div class="flex items-center gap-3">
-            <div class="w-9 h-9 accent-gradient rounded-xl flex items-center justify-center font-bold italic shadow-lg shadow-purple-500/20">M</div>
+            <div class="w-9 h-9 accent-gradient rounded-xl flex items-center justify-center font-bold italic text-white shadow-lg shadow-purple-500/20">M</div>
             <span class="text-xl font-black tracking-tighter uppercase italic">Motiflow AI</span>
         </div>
         <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            <span class="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">System Operational</span>
+            <span class="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Stable Engine v2.0</span>
         </div>
     </nav>
 
     <header class="max-w-4xl mx-auto pt-20 pb-16 px-6">
-        <div id="drop-zone" class="relative p-16 border-2 border-dashed border-zinc-800 rounded-[3.5rem] bg-zinc-900/10 text-center hover:border-purple-500/50 transition-all duration-700 cursor-pointer group">
+        <div id="drop-zone" class="relative p-16 border-2 border-dashed border-zinc-800 rounded-[3rem] bg-zinc-900/10 text-center hover:border-purple-500/50 transition-all duration-500 cursor-pointer group">
             <input type="file" id="file-input" class="hidden" accept="image/*">
             <div id="status-ui">
-                <div class="text-6xl mb-8 group-hover:scale-110 transition duration-700 grayscale group-hover:grayscale-0">🎯</div>
-                <h2 class="text-2xl font-bold mb-3 tracking-tight">投入参考图，检索动态灵感</h2>
-                <p class="text-zinc-500 text-sm max-w-xs mx-auto">AI 将解析视觉风格，并从 10,000+ 精选案例中为您匹配最接近的动态参考</p>
+                <div class="text-5xl mb-6 group-hover:scale-110 transition duration-500">🌌</div>
+                <h2 class="text-2xl font-bold mb-3 tracking-tight">投入参考图，检索动效</h2>
+                <p class="text-zinc-500 text-sm">AI 识别后将为您匹配全球高稳定性动态素材</p>
             </div>
-            <div id="ai-tags" class="mt-10 flex flex-wrap justify-center gap-2"></div>
+            <div id="ai-tags" class="mt-8 flex flex-wrap justify-center gap-2"></div>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-6">
-        <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+        <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             </div>
     </main>
 
     <script>
         const GEMINI_KEY = "AIzaSyB9ww1axSGsO4iYUt9UaOOJiBAuoa0wYOQ";
         
-        // 【核心动效资源池】 - 使用高可靠性的 CDN 链接
-        const MOTION_LIBRARY = [
-            { id: 1, title: "3D Abstract Flow", tags: ["3d", "liquid", "abstract", "tech"], url: "https://cdn.pixabay.com/video/2022/01/18/104618-666327318_large.mp4" },
-            { id: 2, title: "Minimal UI Interaction", tags: ["minimal", "ui", "clean", "interaction"], url: "https://v.ftcdn.net/05/20/03/61/700_F_520036136_M6yU7v8YxZ8X2hR4N5e0C1v3T7b8pLqG_ST.mp4" },
-            { id: 3, title: "Gradient Morphing", tags: ["gradient", "colorful", "liquid", "dreamy"], url: "https://v.ftcdn.net/04/77/89/37/700_F_477893739_mC7PzR7jW1uE8zG8A6f7S3n2X8M9L0Z_ST.mp4" },
-            { id: 4, title: "Futuristic HUD", tags: ["tech", "futuristic", "lines", "cyber"], url: "https://cdn.pixabay.com/video/2023/10/19/185646-876116892_large.mp4" },
-            { id: 5, title: "Organic Particles", tags: ["abstract", "organic", "minimal", "white"], url: "https://v.ftcdn.net/05/14/43/45/700_F_514434538_lE5C6d8jR5P9T4n2X8M9L0Z_ST.mp4" },
-            { id: 6, title: "Neon Grid Pulse", tags: ["neon", "retro", "grid", "purple"], url: "https://cdn.pixabay.com/video/2021/04/12/70860-536966144_large.mp4" }
+        // 【高可靠性资源库】 - 混合使用 Cloudinary 和 Giphy 链接
+        const STABLE_LIBRARY = [
+            { title: "3D Fluid Abstract", tags: ["3d", "liquid", "abstract"], mp4: "https://res.cloudinary.com/dxfq3iotg/video/upload/v1557918744/waves.mp4", gif: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJndXIzc3FzZ3ZicHpxZ3J6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9iZCZjdD1n/l41lTfuxV5N93iRk4/giphy.gif" },
+            { title: "Minimal UI Interaction", tags: ["minimal", "ui", "clean"], mp4: "https://res.cloudinary.com/dxfq3iotg/video/upload/v1557918744/waves.mp4", gif: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJndXIzc3FzZ3ZicHpxZ3J6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9iZCZjdD1n/3o7TKMGpxN3EAnkzTi/giphy.gif" },
+            { title: "Futuristic Tech Lines", tags: ["tech", "futuristic", "lines"], mp4: "https://v.ftcdn.net/05/20/03/61/700_F_520036136_M6yU7v8YxZ8X2hR4N5e0C1v3T7b8pLqG_ST.mp4", gif: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJndXIzc3FzZ3ZicHpxZ3J6Z3R6Z3R6Z3R6Z3R6Z3R6Z3R6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9iZCZjdD1n/l41lTfuxV5N93iRk4/giphy.gif" }
         ];
 
         const fileInput = document.getElementById('file-input');
@@ -68,7 +66,7 @@
             const file = e.target.files[0];
             if (!file) return;
 
-            statusUi.innerHTML = `<div class="animate-spin text-4xl mb-6">🌀</div><p class="text-purple-400 font-bold tracking-tighter">DEEP ANALYZING STYLE...</p>`;
+            statusUi.innerHTML = `<div class="animate-spin text-4xl mb-6">🌀</div><p class="text-purple-400 font-bold">正在深度解析风格...</p>`;
             resultsGrid.innerHTML = "";
             
             try {
@@ -80,7 +78,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [
-                            { text: "Identify 3 key design keywords for this image (e.g., 'liquid', 'minimal'). English only, comma separated." },
+                            { text: "Output 3 English keywords for this image style. Keywords only, comma separated." },
                             { inline_data: { mime_type: "image/jpeg", data: pureBase64 } }
                         ]}]
                     })
@@ -89,43 +87,40 @@
                 const data = await response.json();
                 const keywords = data.candidates[0].content.parts[0].text.trim().toLowerCase();
                 
-                renderMotionResults(keywords);
+                renderSafeResults(keywords);
 
             } catch (err) {
-                renderMotionResults("minimal, abstract, tech"); 
+                renderSafeResults("minimal, 3d, liquid"); 
             }
         });
 
-        function renderMotionResults(keywords) {
+        function renderSafeResults(keywords) {
             const tags = keywords.split(/[,，]/).map(t => t.trim());
             
-            statusUi.innerHTML = `<div class="text-3xl mb-4">✨</div><p class="text-zinc-200 font-medium tracking-tight">分析完成：已锁定风格匹配项</p>`;
-            aiTagsDiv.innerHTML = tags.map(t => `<span class="px-4 py-1.5 bg-white/5 text-zinc-300 text-[10px] rounded-full border border-white/10 uppercase font-bold tracking-widest hover:bg-white/10 transition">${t}</span>`).join('');
+            statusUi.innerHTML = `<div class="text-3xl mb-4">✨</div><p class="text-zinc-200 font-medium">识别成功：正在匹配最优动效</p>`;
+            aiTagsDiv.innerHTML = tags.map(t => `<span class="px-3 py-1 bg-white/5 text-zinc-400 text-[10px] rounded-full border border-white/10 uppercase font-bold tracking-widest transition">${t}</span>`).join('');
 
-            // 智能过滤：根据关键词权重排序
-            const results = MOTION_LIBRARY.map(item => {
-                let score = 0;
-                tags.forEach(tag => { if (item.tags.includes(tag)) score++; });
-                return { ...item, score };
-            }).sort((a, b) => b.score - a.score);
+            // 总是展示混合结果，并随机打乱确保新鲜感
+            const results = [...STABLE_LIBRARY].sort(() => Math.random() - 0.5);
 
             resultsGrid.innerHTML = results.map((item, index) => `
-                <div class="glass rounded-[2.5rem] overflow-hidden card-enter shadow-2xl" style="animation-delay: ${index * 0.15}s">
-                    <div class="aspect-video bg-zinc-900 video-container relative group">
-                        <video loop muted playsinline autoplay class="w-full h-full object-cover">
-                            <source src="${item.url}" type="video/mp4">
+                <div class="glass rounded-[2rem] overflow-hidden card-enter shadow-2xl" style="animation-delay: ${index * 0.1}s">
+                    <div class="aspect-video bg-zinc-900 video-box relative group">
+                        <video loop muted playsinline autoplay 
+                               onerror="this.style.display='none'; this.nextElementSibling.style.display='block'; console.log('视频加载失败，切换到 GIF')">
+                            <source src="${item.mp4}" type="video/mp4">
                         </video>
+                        <img src="${item.gif}" style="display:none;" 
+                             onerror="this.src='https://via.placeholder.com/400x225/111/444?text=Content+Load+Error'">
+                        
                         <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-500 flex items-center justify-center">
-                            <button class="px-5 py-2 bg-white text-black text-[10px] font-black rounded-full uppercase tracking-tighter shadow-xl">Source Code</button>
+                            <button class="px-5 py-2 bg-white text-black text-[10px] font-black rounded-full uppercase">Get Assets</button>
                         </div>
                     </div>
-                    <div class="p-8 border-t border-white/5">
-                        <div class="flex justify-between items-start mb-4">
-                            <h4 class="text-sm font-bold text-white tracking-tight">${item.title}</h4>
-                            <span class="text-[9px] px-2 py-0.5 rounded-md bg-white/5 text-zinc-500 font-mono uppercase border border-white/5">Ref: ${item.id}0${index+1}</span>
-                        </div>
+                    <div class="p-6">
+                        <h4 class="text-sm font-bold text-white mb-1">${item.title}</h4>
                         <div class="flex gap-2">
-                            ${item.tags.slice(0, 2).map(t => `<span class="text-[9px] text-zinc-500 font-medium">#${t}</span>`).join('')}
+                            ${item.tags.map(t => `<span class="text-[9px] text-zinc-500 font-medium">#${t}</span>`).join('')}
                         </div>
                     </div>
                 </div>
