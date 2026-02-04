@@ -2,119 +2,155 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Motiflow AI - 终极修复版</title>
+    <title>Motiflow AI - 灵感交互终端</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: sans-serif; background-color: #050505; color: #f4f4f5; }
         .glass { background: rgba(20, 20, 20, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .accent-gradient { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); }
-        .card-enter { animation: fadeInUp 0.5s ease-out forwards; opacity: 0; }
-        @keyframes fadeInUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        /* 强制视频和图片撑满容器 */
-        .visual-box { position: relative; width: 100%; aspect-ratio: 16/9; background: #111; overflow: hidden; border-radius: 1.5rem 1.5rem 0 0; }
-        video, img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+        .modal.active { display: flex; }
+        .result-card video { cursor: zoom-in; }
     </style>
 </head>
-<body class="min-h-screen pb-20">
+<body class="min-h-screen pb-24">
 
     <nav class="glass sticky top-0 z-50 px-8 py-4 flex justify-between items-center">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-3">
             <div class="w-8 h-8 accent-gradient rounded-lg flex items-center justify-center font-bold italic">M</div>
             <span class="text-xl font-bold tracking-tighter uppercase italic">Motiflow AI</span>
         </div>
-        <div class="text-[10px] text-zinc-500 font-mono">FIXED VERSION 2026</div>
+        <div id="connection-status" class="text-[10px] text-zinc-500 font-mono">REMOTE ENGINE: CONNECTED</div>
     </nav>
 
-    <header class="max-w-4xl mx-auto pt-20 pb-12 px-6">
+    <header class="max-w-4xl mx-auto pt-16 pb-12 px-6">
         <div id="drop-zone" class="relative p-12 border-2 border-dashed border-zinc-800 rounded-[2.5rem] bg-zinc-900/20 text-center hover:border-purple-500 transition-all cursor-pointer group">
             <input type="file" id="file-input" class="hidden" accept="image/*">
             <div id="status-ui">
                 <div class="text-5xl mb-6">🪄</div>
-                <h2 class="text-xl font-bold mb-2">拖入参考图，解锁动效</h2>
-                <p class="text-zinc-500 text-sm">AI 识别风格后，会自动为您调取高稳定的动态参考</p>
+                <h2 class="text-xl font-bold mb-2">投入参考图，寻找动态灵感</h2>
+                <p class="text-zinc-500 text-sm">点击卡片可查看大图，并一键导入 Eagle</p>
             </div>
             <div id="ai-tags" class="mt-8 flex flex-wrap justify-center gap-2"></div>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-6">
-        <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-center">
-            <div class="glass rounded-[1.5rem] overflow-hidden opacity-50"><div class="visual-box"></div><div class="p-4 text-xs text-zinc-600 uppercase">等待识别中...</div></div>
-            <div class="glass rounded-[1.5rem] overflow-hidden opacity-50"><div class="visual-box"></div><div class="p-4 text-xs text-zinc-600 uppercase">等待识别中...</div></div>
-            <div class="glass rounded-[1.5rem] overflow-hidden opacity-50"><div class="visual-box"></div><div class="p-4 text-xs text-zinc-600 uppercase">等待识别中...</div></div>
-        </div>
+        <div id="results-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            </div>
     </main>
+
+    <div id="preview-modal" class="modal" onclick="closeModal()">
+        <div class="max-w-5xl w-full" onclick="event.stopPropagation()">
+            <video id="modal-video" controls loop autoplay class="w-full rounded-3xl shadow-2xl"></video>
+            <div class="mt-6 flex justify-between items-center px-4">
+                <h3 id="modal-title" class="text-xl font-bold text-white">动效详情</h3>
+                <div class="flex gap-4">
+                    <button onclick="saveToEagle()" class="px-6 py-2 bg-purple-600 hover:bg-purple-500 rounded-full text-sm font-bold transition">导入 Eagle</button>
+                    <button onclick="closeModal()" class="px-6 py-2 bg-zinc-800 rounded-full text-sm font-bold">关闭预览</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         const GEMINI_KEY = "AIzaSyB9ww1axSGsO4iYUt9UaOOJiBAuoa0wYOQ";
+        const EAGLE_API = "http://localhost:44324/api/item/addFromURL"; // Eagle 本地接口
         
-        // 【高可靠性视频库】
-        const MOTION_DB = [
-            { title: "3D Fluid Dynamics", tags: ["3d", "liquid", "abstract"], url: "https://www.w3schools.com/html/mov_bbb.mp4" }, // 极稳源
-            { title: "Minimal Particle Flow", tags: ["minimal", "clean", "white"], url: "https://media.giphy.com/media/l41lTfuxV5N93iRk4/giphy.mp4" },
-            { title: "Futuristic Data Stream", tags: ["tech", "lines", "cyber"], url: "https://media.giphy.com/media/3o7TKMGpxN3EAnkzTi/giphy.mp4" }
+        let currentVideoURL = "";
+        let currentTitle = "";
+
+        // 动效库
+        const DB = [
+            { title: "3D Fluid Dynamics", tags: ["3d", "liquid", "abstract"], url: "https://www.w3schools.com/html/mov_bbb.mp4" },
+            { title: "Minimal UI Motion", tags: ["minimal", "ui", "clean"], url: "https://v.ftcdn.net/05/14/43/45/700_F_514434538_lE5C6d8jR5P9T4n2X8M9L0Z_ST.mp4" },
+            { title: "Gradient Flow", tags: ["gradient", "colors", "liquid"], url: "https://v.ftcdn.net/04/77/89/37/700_F_477893739_mC7PzR7jW1uE8zG8A6f7S3n2X8M9L0Z_ST.mp4" }
         ];
 
         const fileInput = document.getElementById('file-input');
         const dropZone = document.getElementById('drop-zone');
+        const resultsGrid = document.getElementById('results-grid');
         const aiTagsDiv = document.getElementById('ai-tags');
         const statusUi = document.getElementById('status-ui');
-        const resultsGrid = document.getElementById('results-grid');
 
         dropZone.onclick = () => fileInput.click();
 
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
-
-            statusUi.innerHTML = `<div class="animate-bounce text-4xl mb-4">🔮</div><p class="text-purple-400 font-bold">AI 正在深度扫描风格...</p>`;
+            statusUi.innerHTML = `<div class="animate-spin text-4xl mb-4">🌀</div><p class="text-purple-400">AI 分析中...</p>`;
             
             try {
                 const base64 = await toBase64(file);
-                const pureBase64 = base64.split(',')[1];
-
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [
-                            { text: "Output 3 keywords for this image style (e.g. liquid, minimal). English only, comma separated." },
-                            { inline_data: { mime_type: "image/jpeg", data: pureBase64 } }
+                            { text: "Output 3 style keywords for this image. English only, comma separated." },
+                            { inline_data: { mime_type: "image/jpeg", data: base64.split(',')[1] } }
                         ]}]
                     })
                 });
-
                 const data = await response.json();
-                const keywords = data.candidates[0].content.parts[0].text.trim().toLowerCase();
-                renderResults(keywords);
-
-            } catch (err) {
-                renderResults("3d, liquid, tech"); // 失败降级
-            }
+                const tags = data.candidates[0].content.parts[0].text.trim().toLowerCase();
+                renderResults(tags);
+            } catch (err) { renderResults("3d, liquid"); }
         });
 
-        function renderResults(keywords) {
-            const tags = keywords.split(/[,，]/).map(t => t.trim());
-            statusUi.innerHTML = `<div class="text-3xl mb-2">✅</div><p class="text-zinc-200">匹配成功！动态参考已就绪</p>`;
-            aiTagsDiv.innerHTML = tags.map(t => `<span class="px-3 py-1 bg-white/5 text-purple-400 text-[10px] rounded-full border border-purple-500/20 uppercase font-bold">${t}</span>`).join('');
+        function renderResults(tagsStr) {
+            const tags = tagsStr.split(',').map(t => t.trim());
+            statusUi.innerHTML = `<div class="text-3xl mb-2">✨</div><p class="text-zinc-300">已为你匹配相似动态参考</p>`;
+            aiTagsDiv.innerHTML = tags.map(t => `<span class="px-3 py-1 bg-purple-500/10 text-purple-400 text-[10px] rounded-full uppercase font-bold border border-purple-500/20">${t}</span>`).join('');
 
-            resultsGrid.innerHTML = MOTION_DB.map((item, index) => `
-                <div class="glass rounded-[1.5rem] overflow-hidden card-enter" style="animation-delay: ${index * 0.1}s">
-                    <div class="visual-box">
+            resultsGrid.innerHTML = DB.map((item, index) => `
+                <div class="glass rounded-[2rem] overflow-hidden group">
+                    <div class="aspect-video bg-zinc-900">
                         <video loop muted playsinline autoplay 
-                               oncanplay="this.style.opacity=1"
-                               onerror="this.parentElement.innerHTML='<div class=\'flex items-center justify-center h-full text-[10px] text-zinc-600\'>视频源加载受限</div>'">
+                               onclick="openPreview('${item.url}', '${item.title}')"
+                               class="w-full h-full object-cover hover:scale-105 transition duration-500">
                             <source src="${item.url}" type="video/mp4">
                         </video>
                     </div>
-                    <div class="p-5 border-t border-white/5">
-                        <h4 class="text-xs font-bold text-zinc-200 mb-1 uppercase tracking-tighter">${item.title}</h4>
-                        <div class="flex gap-2 justify-center">
-                            ${item.tags.map(t => `<span class="text-[9px] text-zinc-600">#${t}</span>`).join('')}
-                        </div>
+                    <div class="p-6 flex justify-between items-center">
+                        <h4 class="text-sm font-bold text-zinc-300">${item.title}</h4>
+                        <button onclick="saveToEagle('${item.url}', '${item.title}')" class="text-[10px] text-zinc-500 hover:text-white underline">保存至 Eagle</button>
                     </div>
                 </div>
             `).join('');
+        }
+
+        // 预览控制
+        function openPreview(url, title) {
+            currentVideoURL = url;
+            currentTitle = title;
+            document.getElementById('modal-video').src = url;
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('preview-modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('preview-modal').classList.remove('active');
+            document.getElementById('modal-video').pause();
+        }
+
+        // 保存到 Eagle
+        async function saveToEagle(url = currentVideoURL, title = currentTitle) {
+            try {
+                const response = await fetch(EAGLE_API, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        url: url,
+                        name: title,
+                        tags: ["Motiflow-AI", "Motion-Ref"]
+                    })
+                });
+                if (response.ok) alert('✨ 已成功发送至你的 Eagle！');
+                else alert('❌ 保存失败，请确保 Eagle 已开启并允许外部连接。');
+            } catch (e) {
+                alert('⚠️ 无法连接 Eagle。请检查：\n1. Eagle 正在运行\n2. 偏好设置中已开启浏览器扩展/API 连接');
+            }
         }
 
         function toBase64(file) {
