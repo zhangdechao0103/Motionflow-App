@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer">
-    <title>Motiflow VFX - 导演控制台</title>
+    <title>Motiflow VFX - AI 生命线版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #050505; color: #e0e0e0; }
         .glass { background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
         
-        /* 选中态高亮 */
-        .tag-btn.active { background-color: #00e5ff; color: black; border-color: #00e5ff; box-shadow: 0 0 15px rgba(0, 229, 255, 0.4); }
-        .tag-btn { transition: all 0.2s; user-select: none; }
+        /* 霓虹聚焦 */
+        .search-input:focus { box-shadow: 0 0 20px rgba(0, 229, 255, 0.3); border-color: #00e5ff; }
         
         .vfx-card { transition: all 0.2s; border: 1px solid #222; }
         .vfx-card:hover { transform: translateY(-4px); border-color: #00e5ff; z-index: 10; }
@@ -19,100 +18,111 @@
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 100; opacity: 0; transition: opacity 0.2s; }
         .modal.active { display: flex; opacity: 1; }
 
+        /* 设置面板动画 */
+        .settings-panel { transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .settings-panel.open { transform: translateX(0); }
+
         /* 滚动条 */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #111; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #555; }
     </style>
 </head>
-<body class="min-h-screen bg-[#080808]">
+<body class="min-h-screen bg-[#050505] flex flex-col overflow-x-hidden">
 
-    <nav class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b border-white/5">
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-cyan-600 rounded flex items-center justify-center font-bold text-black">M</div>
-            <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-cyan-500 font-normal">| DIRECTOR</span></span>
-        </div>
-        <div class="text-[10px] text-zinc-500 font-mono">V9.0 STABLE</div>
-    </nav>
-
-    <div class="max-w-[1600px] mx-auto flex flex-col lg:flex-row min-h-[calc(100vh-80px)]">
-        
-        <aside class="w-full lg:w-[400px] p-6 lg:border-r border-white/5 flex flex-col gap-6 bg-[#0a0a0a]">
-            
-            <div id="drop-zone" class="relative p-8 border border-dashed border-zinc-700 rounded-2xl bg-zinc-900/40 text-center hover:border-cyan-500/50 transition-all cursor-pointer group">
-                <input type="file" id="file-input" class="hidden" accept="image/*">
-                <div id="status-ui">
-                    <div class="text-4xl mb-3 opacity-80 group-hover:scale-110 transition">📥</div>
-                    <p class="text-zinc-400 text-xs font-bold">点击上传参考图</p>
-                    <p class="text-zinc-600 text-[10px] mt-1">AI 自动提取 + 人工修正</p>
-                </div>
-            </div>
-
-            <div class="flex flex-col gap-4">
-                <div class="flex justify-between items-end">
-                    <h3 class="text-xs font-bold text-cyan-500 uppercase tracking-widest">TAG BUILDER</h3>
-                    <button onclick="clearTags()" class="text-[10px] text-red-400 hover:text-red-300">清除全部</button>
+    <nav class="sticky top-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-md border-b border-white/5 shadow-2xl">
+        <div class="max-w-[1800px] mx-auto px-6 py-4">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-cyan-600 rounded flex items-center justify-center font-bold text-black shadow-[0_0_15px_rgba(6,182,212,0.5)]">AI</div>
+                    <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-cyan-500 font-normal">| ONLINE</span></span>
                 </div>
                 
-                <div class="bg-black border border-zinc-700 p-3 rounded-lg min-h-[40px] flex flex-wrap gap-2" id="active-tags-container">
-                    <span class="text-zinc-600 text-xs italic p-1">请选择下方标签或上传图片...</span>
+                <div class="flex items-center gap-4">
+                    <div id="ai-status" class="text-[10px] font-mono text-zinc-600 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-zinc-600"></span> WAITING
+                    </div>
+                    <button onclick="toggleSettings()" class="text-zinc-400 hover:text-white transition p-2 rounded-full hover:bg-white/10">
+                        ⚙️ 设置 API
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex gap-4 items-stretch">
+                <div class="relative group">
+                    <input type="file" id="file-input" class="hidden" accept="image/*">
+                    <button onclick="document.getElementById('file-input').click()" 
+                            class="h-full px-4 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg border border-zinc-700 transition flex flex-col items-center justify-center min-w-[80px]">
+                        <span class="text-xl mb-1">📸</span>
+                        <span class="text-[10px] font-bold">识图</span>
+                    </button>
                 </div>
 
-                <div class="space-y-4">
-                    <div>
-                        <p class="text-[10px] text-zinc-500 mb-2">引擎 / 风格 (必选)</p>
-                        <div class="flex flex-wrap gap-2">
-                            <button class="tag-btn border border-zinc-700 bg-zinc-900/50 text-zinc-400 px-3 py-1 rounded text-xs hover:border-zinc-500" onclick="toggleTag('Unity VFX')">Unity</button>
-                            <button class="tag-btn border border-zinc-700 bg-zinc-900/50 text-zinc-400 px-3 py-1 rounded text-xs hover:border-zinc-500" onclick="toggleTag('UE5 Particle')">UE5</button>
-                            <button class="tag-btn border border-zinc-700 bg-zinc-900/50 text-zinc-400 px-3 py-1 rounded text-xs hover:border-zinc-500" onclick="toggleTag('Pixel Art')">像素</button>
-                            <button class="tag-btn border border-zinc-700 bg-zinc-900/50 text-zinc-400 px-3 py-1 rounded text-xs hover:border-zinc-500" onclick="toggleTag('Anime Style')">二次元</button>
-                            <button class="tag-btn border border-zinc-700 bg-zinc-900/50 text-zinc-400 px-3 py-1 rounded text-xs hover:border-zinc-500" onclick="toggleTag('Low Poly')">LowPoly</button>
-                        </div>
-                    </div>
-                    <div>
-                        <p class="text-[10px] text-zinc-500 mb-2">元素 / 形态</p>
-                        <div class="flex flex-wrap gap-2">
-                            <button class="tag-btn border border-zinc-700 bg-zinc-900/50 text-zinc-400 px-3 py-1 rounded text-xs hover:border-zinc-500" onclick="toggleTag('Slash')">刀光</button>
-                            <button class="tag-btn border border-zinc-700 bg-zinc-900/50 text-zinc-400 px-3 py-1 rounded text-xs hover:border-zinc-500" onclick="toggleTag('Explosion')">爆炸</button>
-                            <button class="tag-btn border border-zinc-700 bg-zinc-900/50 text-zinc-400 px-3 py-1 rounded text-xs hover:border-zinc-500" onclick="toggleTag('Magic Circle')">法阵</button>
-                            <button class="tag-btn border border-zinc-700 bg-zinc-900/50 text-zinc-400 px-3 py-1 rounded text-xs hover:border-zinc-500" onclick="toggleTag('Lightning')">闪电</button>
-                            <button class="tag-btn border border-zinc-700 bg-zinc-900/50 text-zinc-400 px-3 py-1 rounded text-xs hover:border-zinc-500" onclick="toggleTag('Fire')">火焰</button>
-                            <button class="tag-btn border border-zinc-700 bg-zinc-900/50 text-zinc-400 px-3 py-1 rounded text-xs hover:border-zinc-500" onclick="toggleTag('Ice')">冰霜</button>
-                            <button class="tag-btn border border-zinc-700 bg-zinc-900/50 text-zinc-400 px-3 py-1 rounded text-xs hover:border-zinc-500" onclick="toggleTag('Hologram UI')">全息UI</button>
-                        </div>
-                    </div>
+                <div class="flex-1 relative">
+                    <input type="text" id="search-input" 
+                           class="search-input w-full h-14 bg-black border border-zinc-700 rounded-lg px-6 text-lg text-white placeholder-zinc-600 outline-none transition"
+                           placeholder="AI 将自动在此填入关键词，或手动输入..."
+                           onkeydown="if(event.key === 'Enter') runSearch()">
+                    <button onclick="runSearch()" class="absolute right-2 top-2 bottom-2 px-6 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-md transition">
+                        搜索
+                    </button>
                 </div>
+            </div>
 
-                <button onclick="executeSearch()" class="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg shadow-lg shadow-cyan-900/50 transition mt-4">
-                    🚀 开始精准搜索
-                </button>
+            <div class="flex flex-wrap gap-2 mt-4" id="quick-tags">
+                <span class="text-[10px] text-zinc-500 py-1 uppercase tracking-widest">Tags:</span>
+                <button class="tag-btn bg-zinc-900 border border-zinc-700 text-zinc-400 px-3 py-1 rounded text-xs hover:border-cyan-500 hover:text-cyan-400" onclick="addTag('Unity VFX')">Unity</button>
+                <button class="tag-btn bg-zinc-900 border border-zinc-700 text-zinc-400 px-3 py-1 rounded text-xs hover:border-cyan-500 hover:text-cyan-400" onclick="addTag('Anime Slash')">二次元刀光</button>
+                <button class="tag-btn bg-zinc-900 border border-zinc-700 text-zinc-400 px-3 py-1 rounded text-xs hover:border-cyan-500 hover:text-cyan-400" onclick="addTag('Pixel Explosion')">像素爆炸</button>
             </div>
             
-            <div class="mt-auto pt-6 border-t border-white/5 grid grid-cols-2 gap-3">
-                <a id="link-huaban" href="https://huaban.com/search/?q=游戏特效" target="_blank" class="p-3 bg-[#c8222c]/10 border border-[#c8222c]/30 rounded-lg hover:bg-[#c8222c] hover:text-white text-[#c8222c] text-xs font-bold text-center transition flex items-center justify-center gap-2">
-                    <span>🌸 花瓣网</span>
+            <div class="flex gap-4 mt-4 pt-4 border-t border-white/5 overflow-x-auto">
+                <a id="link-huaban" target="_blank" href="https://huaban.com/search/?q=游戏特效" class="flex items-center gap-2 px-4 py-2 bg-[#c8222c]/10 text-[#c8222c] border border-[#c8222c]/30 rounded hover:bg-[#c8222c] hover:text-white transition text-xs font-bold whitespace-nowrap">
+                    🌸 去花瓣搜 "<span id="text-huaban">...</span>"
                 </a>
-                <a id="link-bilibili" href="https://search.bilibili.com/all?keyword=Unity特效教程" target="_blank" class="p-3 bg-[#00aeec]/10 border border-[#00aeec]/30 rounded-lg hover:bg-[#00aeec] hover:text-white text-[#00aeec] text-xs font-bold text-center transition flex items-center justify-center gap-2">
-                    <span>📺 Bilibili</span>
+                <a id="link-bilibili" target="_blank" href="https://search.bilibili.com/all?keyword=游戏特效" class="flex items-center gap-2 px-4 py-2 bg-[#00aeec]/10 text-[#00aeec] border border-[#00aeec]/30 rounded hover:bg-[#00aeec] hover:text-white transition text-xs font-bold whitespace-nowrap">
+                    📺 去B站搜 "<span id="text-bilibili">...</span>"
                 </a>
             </div>
-        </aside>
+        </div>
+    </nav>
 
-        <main class="flex-1 p-6 bg-[#050505] h-screen overflow-y-auto" id="main-scroll">
-            <div id="results-header" class="mb-4 flex items-center justify-between">
-                <h2 class="text-sm font-bold text-white">SEARCH RESULTS</h2>
-                <span class="text-[10px] text-zinc-600 font-mono">POWERED BY TENOR | FILTERED BY AI</span>
-            </div>
-            
-            <div id="results-grid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 pb-20">
-                <div class="col-span-full text-center py-20 text-zinc-700 border-2 border-dashed border-zinc-800 rounded-xl">
-                    <p class="text-sm">👈 请在左侧上传图片或选择标签开始</p>
-                </div>
-            </div>
-            <div id="loader" class="hidden text-center py-4 text-cyan-500 text-xs animate-pulse">LOADING MORE VFX...</div>
-        </main>
+    <div id="settings-panel" class="settings-panel fixed top-0 right-0 h-full w-80 bg-[#111] border-l border-zinc-800 z-50 p-6 shadow-2xl flex flex-col gap-6">
+        <div class="flex justify-between items-center">
+            <h2 class="text-xl font-bold text-white">⚙️ API 设置</h2>
+            <button onclick="toggleSettings()" class="text-zinc-500 hover:text-white">✕</button>
+        </div>
+        
+        <div>
+            <label class="block text-xs text-zinc-500 mb-2 uppercase font-bold">Gemini API Key</label>
+            <input type="text" id="api-key-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white focus:border-cyan-500 outline-none" placeholder="AIzaSy...">
+            <p class="text-[10px] text-zinc-600 mt-1">默认使用内置 Key，如失效请填入自己的。</p>
+        </div>
+
+        <div>
+            <label class="block text-xs text-zinc-500 mb-2 uppercase font-bold">API Base URL (代理地址)</label>
+            <input type="text" id="base-url-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white focus:border-cyan-500 outline-none" value="https://generativelanguage.googleapis.com">
+            <p class="text-[10px] text-zinc-600 mt-2 leading-relaxed">
+                <span class="text-red-400">重要提示：</span>如果你在中国大陆，默认地址会被墙。请将上方地址修改为你的反代地址。<br>
+                或者尝试搜索 "Gemini API Proxy" 获取公共地址。
+            </p>
+        </div>
+
+        <button onclick="saveSettings()" class="w-full py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded font-bold text-sm transition">
+            保存并重试
+        </button>
     </div>
+    <div id="settings-overlay" onclick="toggleSettings()" class="fixed inset-0 bg-black/50 z-40 hidden backdrop-blur-sm"></div>
+
+    <main class="flex-1 max-w-[1800px] w-full mx-auto p-6" id="main-scroll">
+        <div id="results-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            <div class="col-span-full text-center py-20 text-zinc-700 border-2 border-dashed border-zinc-800 rounded-xl">
+                <p class="text-lg font-bold mb-2">AI IS READY</p>
+                <p class="text-sm">请上传图片，如果失败请点击右上角设置检查 API 连通性</p>
+            </div>
+        </div>
+        <div id="loader" class="hidden text-center py-10 text-cyan-500 text-xs animate-pulse">LOADING...</div>
+    </main>
 
     <div id="preview-modal" class="modal" onclick="closeModal()">
         <div class="w-full h-full flex flex-col items-center justify-center p-6" onclick="event.stopPropagation()">
@@ -132,131 +142,150 @@
     </div>
 
     <script>
-        const GEMINI_KEY = "AIzaSyB9ww1axSGsO4iYUt9UaOOJiBAuoa0wYOQ";
+        // 默认配置
+        let CONFIG = {
+            apiKey: "AIzaSyB9ww1axSGsO4iYUt9UaOOJiBAuoa0wYOQ", // 默认 Key
+            baseUrl: "https://generativelanguage.googleapis.com" // 默认官方地址
+        };
+
         const TENOR_KEY = "LIVDSRZULELA";
 
-        // 状态管理
-        let activeTags = new Set();
         let nextCursor = "";
-        let currentQuery = "";
         let isLoading = false;
         let currentImgUrl = "";
-
+        
         // DOM
-        const dropZone = document.getElementById('drop-zone');
+        const searchInput = document.getElementById('search-input');
         const fileInput = document.getElementById('file-input');
-        const tagsContainer = document.getElementById('active-tags-container');
-        const statusUi = document.getElementById('status-ui');
         const resultsGrid = document.getElementById('results-grid');
-        const mainScroll = document.getElementById('main-scroll');
-        const loader = document.getElementById('loader');
+        const aiStatus = document.getElementById('ai-status');
+        const settingsPanel = document.getElementById('settings-panel');
+        const settingsOverlay = document.getElementById('settings-overlay');
 
-        // 上传逻辑
-        dropZone.onclick = () => fileInput.click();
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => {
-            dropZone.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); });
-        });
-        dropZone.addEventListener('drop', e => handleFile(e.dataTransfer.files[0]));
-        fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+        // 初始化加载配置
+        if(localStorage.getItem('motiflow_config')) {
+            const saved = JSON.parse(localStorage.getItem('motiflow_config'));
+            if(saved.apiKey) CONFIG.apiKey = saved.apiKey;
+            if(saved.baseUrl) CONFIG.baseUrl = saved.baseUrl;
+        }
+        document.getElementById('api-key-input').value = CONFIG.apiKey;
+        document.getElementById('base-url-input').value = CONFIG.baseUrl;
 
-        // 无限滚动
-        mainScroll.addEventListener('scroll', () => {
-            if (mainScroll.scrollTop + mainScroll.clientHeight >= mainScroll.scrollHeight - 300) {
-                if (!isLoading && nextCursor) fetchTenor(currentQuery, true);
-            }
-        });
+        // 设置面板逻辑
+        function toggleSettings() {
+            settingsPanel.classList.toggle('open');
+            settingsOverlay.classList.toggle('hidden');
+        }
 
-        async function handleFile(file) {
-            if (!file) return;
-            statusUi.innerHTML = `<p class="text-cyan-400 text-xs font-bold animate-pulse">AI 分析中...</p>`;
+        function saveSettings() {
+            const newKey = document.getElementById('api-key-input').value.trim();
+            const newUrl = document.getElementById('base-url-input').value.trim().replace(/\/$/, ""); // 去掉末尾斜杠
             
+            if(newKey) CONFIG.apiKey = newKey;
+            if(newUrl) CONFIG.baseUrl = newUrl;
+            
+            localStorage.setItem('motiflow_config', JSON.stringify(CONFIG));
+            toggleSettings();
+            alert("设置已保存！请重新尝试上传图片。");
+        }
+
+        // 监听输入
+        searchInput.addEventListener('input', (e) => updatePortals(e.target.value));
+
+        function addTag(tag) {
+            const current = searchInput.value;
+            searchInput.value = current ? current + " " + tag : tag;
+            updatePortals(searchInput.value);
+            runSearch();
+        }
+
+        function updatePortals(val) {
+            const query = val || "游戏特效";
+            document.getElementById('text-huaban').innerText = query;
+            document.getElementById('link-huaban').href = `https://huaban.com/search/?q=${encodeURIComponent(query + " 游戏特效")}`;
+            document.getElementById('text-bilibili').innerText = query;
+            document.getElementById('link-bilibili').href = `https://search.bilibili.com/all?keyword=${encodeURIComponent(query + " Unity教程")}`;
+        }
+
+        // 核心：AI 识图 (带重试机制)
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            updateAIStatus("CONNECTING...", "text-yellow-500 animate-pulse");
+            searchInput.placeholder = "AI 正在努力连接...";
+
             try {
                 const base64 = await toBase64(file);
-                // 专门针对 VFX 的 Prompt
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
+                
+                // 构建 API URL，使用用户配置的 Base URL
+                const apiUrl = `${CONFIG.baseUrl}/v1beta/models/gemini-1.5-flash:generateContent?key=${CONFIG.apiKey}`;
+
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [
-                            { text: "Analyze this game VFX image. Identify:\n1. Engine/Style (Unity, UE5, Pixel Art, Anime)\n2. Element (Fire, Ice, Slash, Explosion, Magic)\nOutput ONLY English keywords separated by comma." },
+                            { text: "Analyze this Game VFX. Output 3 English keywords separated by space (e.g. Unity Explosion Anime)." },
                             { inline_data: { mime_type: "image/jpeg", data: base64.split(',')[1] } }
                         ]}]
                     })
                 });
 
-                if (!response.ok) throw new Error("API Error");
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(`API Error: ${response.status} - ${errText}`);
+                }
+
                 const data = await response.json();
-                const keywords = data.candidates[0].content.parts[0].text.split(',');
                 
-                // 将 AI 结果添加到标签池
-                keywords.forEach(k => activeTags.add(k.trim()));
-                renderActiveTags();
-                statusUi.innerHTML = `<p class="text-green-400 text-xs font-bold">分析完成</p>`;
+                if (!data.candidates || !data.candidates[0].content) {
+                    throw new Error("AI Returned Empty Response");
+                }
+
+                const keywords = data.candidates[0].content.parts[0].text.trim();
                 
-                // 自动执行一次搜索
-                executeSearch();
+                // 成功！
+                searchInput.value = keywords;
+                updatePortals(keywords);
+                runSearch();
+                updateAIStatus("ONLINE", "text-green-500");
 
             } catch (err) {
                 console.error(err);
-                statusUi.innerHTML = `<p class="text-red-400 text-xs font-bold">AI 离线 - 请手动选标签</p>`;
+                updateAIStatus("OFFLINE (Check Settings)", "text-red-500 font-bold");
+                
+                // 自动弹出设置面板，提示用户
+                if (err.message.includes("Failed to fetch") || err.message.includes("404")) {
+                    alert("AI 连接失败！\n\n原因：你的网络无法直接连接 Google API (404/Network Error)。\n\n解决办法：\n1. 请点击右上角设置。\n2. 在 Base URL 中填入一个可用的 Gemini 代理地址。\n3. 或者开启全局 VPN。");
+                    toggleSettings();
+                } else {
+                    alert(`AI 报错: ${err.message}`);
+                }
             }
+        });
+
+        function updateAIStatus(text, classes) {
+            const el = document.getElementById('ai-status');
+            el.innerHTML = `<span class="w-2 h-2 rounded-full ${classes.includes('red') ? 'bg-red-500' : (classes.includes('green') ? 'bg-green-500' : 'bg-yellow-500')}"></span> ${text}`;
+            el.className = `text-[10px] font-mono flex items-center gap-2 ${classes}`;
         }
 
-        // 标签系统逻辑
-        function toggleTag(tag) {
-            if (activeTags.has(tag)) activeTags.delete(tag);
-            else activeTags.add(tag);
-            renderActiveTags();
-        }
+        async function runSearch(isAppend = false) {
+            const val = searchInput.value.trim();
+            if (!val) return;
 
-        function clearTags() {
-            activeTags.clear();
-            renderActiveTags();
-        }
-
-        function renderActiveTags() {
-            if (activeTags.size === 0) {
-                tagsContainer.innerHTML = `<span class="text-zinc-600 text-xs italic p-1">请选择下方标签或上传图片...</span>`;
-                return;
+            if (!isAppend) {
+                resultsGrid.innerHTML = "";
+                nextCursor = "";
             }
-            tagsContainer.innerHTML = Array.from(activeTags).map(tag => `
-                <span class="bg-cyan-900/30 text-cyan-400 border border-cyan-500/30 px-2 py-1 rounded text-xs flex items-center gap-2 cursor-pointer hover:bg-red-900/30 hover:text-red-400 hover:border-red-500/30 transition" onclick="toggleTag('${tag}')">
-                    ${tag} ✕
-                </span>
-            `).join('');
-
-            // 同步按钮状态
-            document.querySelectorAll('.tag-btn').forEach(btn => {
-                if (activeTags.has(btn.innerText)) btn.classList.add('active');
-                else btn.classList.remove('active');
-            });
-
-            // 动态更新外部传送门链接
-            const queryStr = Array.from(activeTags).join(' ');
-            document.getElementById('link-huaban').href = `https://huaban.com/search/?q=${encodeURIComponent(queryStr + " 游戏特效")}`;
-            document.getElementById('link-bilibili').href = `https://search.bilibili.com/all?keyword=${encodeURIComponent(queryStr + " Unity教程")}`;
-        }
-
-        // 核心搜索逻辑
-        function executeSearch() {
-            if (activeTags.size === 0) return alert("请至少选择一个标签！");
-            
-            // 构造强力过滤词
-            const baseQuery = Array.from(activeTags).join(' ');
-            // 负面词过滤 + 强制游戏后缀
-            currentQuery = `${baseQuery} gameplay vfx -meme -funny -text -cartoon`; 
-            
-            nextCursor = "";
-            resultsGrid.innerHTML = "";
-            fetchTenor(currentQuery);
-        }
-
-        async function fetchTenor(query, isAppend = false) {
             isLoading = true;
-            loader.style.display = 'block';
+            document.getElementById('loader').classList.remove('hidden');
+
+            const finalQuery = `${val} gameplay vfx -meme -funny`;
 
             try {
-                let url = `https://g.tenor.com/v1/search?q=${encodeURIComponent(query)}&key=${TENOR_KEY}&limit=20&media_filter=minimal`;
+                let url = `https://g.tenor.com/v1/search?q=${encodeURIComponent(finalQuery)}&key=${TENOR_KEY}&limit=20&media_filter=minimal`;
                 if (isAppend && nextCursor) url += `&pos=${nextCursor}`;
 
                 const res = await fetch(url);
@@ -267,22 +296,28 @@
                     const html = data.results.map(item => `
                         <div class="vfx-card bg-[#111] rounded-lg overflow-hidden relative cursor-pointer group aspect-square"
                              onclick="openModal('${item.media[0].gif.url}', '${item.itemurl}')">
-                            <img src="${item.media[0].tinygif.url}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition duration-300">
+                            <img src="${item.media[0].tinygif.url}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition duration-300" loading="lazy">
                         </div>
                     `).join('');
 
                     if (isAppend) resultsGrid.insertAdjacentHTML('beforeend', html);
                     else resultsGrid.innerHTML = html;
                 } else if (!isAppend) {
-                    resultsGrid.innerHTML = `<div class="col-span-full text-center py-20 text-zinc-500">未找到相关结果，请尝试减少标签或更换组合。</div>`;
+                    resultsGrid.innerHTML = `<div class="col-span-full text-center py-20 text-zinc-500">未找到结果，请尝试其他关键词。</div>`;
                 }
             } catch (e) {
-                if (!isAppend) resultsGrid.innerHTML = `<div class="col-span-full text-center py-20 text-red-500">无法连接素材库，请检查网络或使用左下角传送门。</div>`;
+                resultsGrid.innerHTML = `<div class="col-span-full text-center py-20 text-red-500">Tenor 连接失败。</div>`;
             } finally {
                 isLoading = false;
-                loader.style.display = 'none';
+                document.getElementById('loader').classList.add('hidden');
             }
         }
+
+        window.addEventListener('scroll', () => {
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
+                if (!isLoading && nextCursor) runSearch(true);
+            }
+        });
 
         function openModal(url, sourceUrl) {
             currentImgUrl = url;
