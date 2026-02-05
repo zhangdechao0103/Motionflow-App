@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer">
-    <title>Motiflow VFX - 智能配额版 v19</title>
+    <title>Motiflow VFX - 稳定防崩版 v20</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #050505; color: #e0e0e0; }
@@ -16,12 +16,21 @@
         .settings-panel { transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .settings-panel.open { transform: translateX(0); }
         
+        /* 列表样式 */
+        .model-item { cursor: pointer; padding: 12px; border-bottom: 1px solid #222; font-family: monospace; font-size: 11px; color: #888; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
+        .model-item:hover { background: #111; color: #fff; }
+        .model-item.active { background: #1e3a8a; color: #93c5fd; border-left: 4px solid #60a5fa; }
+        .model-item.recommended { color: #34d399; font-weight: bold; background: #064e3b10; }
+        .tag { padding: 2px 6px; border-radius: 4px; font-size: 9px; margin-left: 6px; font-weight: bold; }
+        .tag-rec { background: #059669; color: white; }
+        .tag-text { background: #7f1d1d; color: #fca5a5; }
+        
         /* 终端日志 */
-        .console-box { font-family: 'Consolas', monospace; font-size: 10px; background: #000; border: 1px solid #333; padding: 10px; height: 120px; overflow-y: auto; color: #ccc; margin-bottom: 10px; white-space: pre-wrap; }
-        .log-err { color: #f87171; }
+        .console-box { font-family: 'Consolas', monospace; font-size: 10px; background: #000; border: 1px solid #333; padding: 10px; height: 140px; overflow-y: auto; color: #ccc; margin-bottom: 10px; white-space: pre-wrap; }
+        .log-err { color: #f87171; border-left: 2px solid #f87171; padding-left: 5px; }
         .log-succ { color: #4ade80; }
         .log-warn { color: #facc15; }
-        .log-info { color: #60a5fa; }
+        .log-raw { color: #60a5fa; font-size: 9px; opacity: 0.7; }
     </style>
 </head>
 <body class="min-h-screen bg-[#050505] flex flex-col overflow-x-hidden">
@@ -30,15 +39,12 @@
         <div class="max-w-[1800px] mx-auto px-6 py-4">
             <div class="flex justify-between items-center mb-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-emerald-600 rounded flex items-center justify-center font-bold text-white shadow-[0_0_15px_rgba(5,150,105,0.5)]">19</div>
-                    <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-emerald-500 font-normal">| QUOTA</span></span>
+                    <div class="w-8 h-8 bg-rose-600 rounded flex items-center justify-center font-bold text-white shadow-[0_0_15px_rgba(225,29,72,0.5)]">20</div>
+                    <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-rose-500 font-normal">| STABLE</span></span>
                 </div>
                 <div class="flex items-center gap-4">
-                    <div id="current-model-badge" class="hidden px-2 py-1 bg-zinc-800 border border-zinc-700 rounded text-[10px] text-zinc-400 font-mono">
-                        Model: <span id="model-name-display" class="text-white">...</span>
-                    </div>
                     <button onclick="toggleSettings()" class="text-white bg-zinc-800 border border-zinc-600 px-3 py-1 rounded-full text-xs hover:bg-zinc-700 animate-pulse flex items-center gap-2">
-                        <span>📡 控制台</span>
+                        <span>📡 模型控制台 (点我)</span>
                     </button>
                 </div>
             </div>
@@ -54,8 +60,8 @@
                 </div>
                 <div class="flex-1 relative">
                     <input type="text" id="search-input" 
-                           class="w-full h-14 bg-black border border-zinc-700 rounded-lg px-6 text-lg text-white placeholder-zinc-600 outline-none transition focus:border-cyan-500"
-                           placeholder="等待操作..."
+                           class="w-full h-14 bg-black border border-zinc-700 rounded-lg px-6 text-lg text-white placeholder-zinc-600 outline-none transition focus:border-rose-500"
+                           placeholder="等待扫描..."
                            onkeydown="if(event.key === 'Enter') runSearch()">
                     <button onclick="runSearch()" class="absolute right-2 top-2 bottom-2 px-6 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-md transition">搜索</button>
                 </div>
@@ -68,34 +74,34 @@
         </div>
     </nav>
 
-    <div id="settings-panel" class="settings-panel fixed top-0 right-0 h-full w-[500px] bg-[#0d0d0d] border-l border-zinc-800 z-50 p-6 shadow-2xl flex flex-col gap-4 overflow-y-auto">
+    <div id="settings-panel" class="settings-panel fixed top-0 right-0 h-full w-[550px] bg-[#0d0d0d] border-l border-zinc-800 z-50 p-6 shadow-2xl flex flex-col gap-4 overflow-y-auto">
         <div class="flex justify-between items-center">
-            <h2 class="text-lg font-bold text-white">📡 模型控制台</h2>
+            <h2 class="text-lg font-bold text-white">📡 模型选择与诊断</h2>
             <button onclick="toggleSettings()" class="text-zinc-500 hover:text-white">✕</button>
         </div>
 
         <div class="console-box" id="debug-log">
-            <div class="text-zinc-500">> Ready. Upload image to start.</div>
+            <div class="text-zinc-500">> System Ready. Please Scan Models.</div>
         </div>
 
         <div class="p-4 bg-zinc-900 rounded-lg border border-zinc-800">
-            <label class="block text-xs font-bold text-emerald-400 mb-2">API Key</label>
-            <input type="text" id="api-key-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white outline-none focus:border-emerald-500 font-mono" placeholder="AIzaSy...">
+            <label class="block text-xs font-bold text-rose-400 mb-2">1. API Key (必填)</label>
+            <input type="text" id="api-key-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white outline-none focus:border-rose-500 font-mono" placeholder="AIzaSy...">
         </div>
 
-        <div class="p-4 bg-zinc-900 rounded-lg border border-zinc-800">
-            <label class="block text-xs font-bold text-emerald-400 mb-2">当前策略：自动降级</label>
-            <p class="text-[10px] text-zinc-400">
-                系统将按以下顺序尝试模型，直到成功：<br>
-                1. <span class="text-white">gemini-2.0-flash</span> (最新/易限流)<br>
-                2. <span class="text-white">gemini-1.5-flash</span> (稳定/配额多)<br>
-                3. <span class="text-white">gemini-1.5-pro</span> (强大/慢)<br>
-                4. <span class="text-white">gemini-pro-vision</span> (保底)
-            </p>
+        <div class="p-4 bg-zinc-900 rounded-lg border border-zinc-800 flex-1 flex flex-col min-h-[300px]">
+            <div class="flex justify-between items-center mb-2">
+                <label class="block text-xs font-bold text-green-400">2. 可用模型列表</label>
+                <button onclick="scanModels()" class="px-3 py-1 bg-green-700 hover:bg-green-600 text-white text-[10px] rounded font-bold transition">🚀 扫描模型</button>
+            </div>
+            
+            <div id="model-list" class="flex-1 bg-black border border-zinc-700 rounded overflow-y-auto p-2">
+                <div class="text-zinc-600 text-[10px] p-4 text-center">点击右上角“扫描”获取列表</div>
+            </div>
         </div>
 
-        <button onclick="saveSettings()" class="w-full py-3 bg-zinc-800 hover:bg-white hover:text-black text-white rounded font-bold text-sm transition mt-auto">
-            💾 保存配置
+        <button onclick="saveSettings()" class="w-full py-3 bg-zinc-800 hover:bg-white hover:text-black text-white rounded font-bold text-sm transition mt-auto border border-zinc-700">
+            💾 保存当前配置
         </button>
     </div>
     <div id="settings-overlay" onclick="toggleSettings()" class="fixed inset-0 bg-black/50 z-40 hidden backdrop-blur-sm"></div>
@@ -103,12 +109,12 @@
     <main class="flex-1 max-w-[1800px] w-full mx-auto p-6">
         <div id="results-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             <div class="col-span-full text-center py-20 text-zinc-700 border-2 border-dashed border-zinc-800 rounded-xl">
-                <p class="text-lg font-bold mb-2">SYSTEM READY</p>
-                <p class="text-sm">遇到 429 错误会自动重试，请放心使用</p>
+                <p class="text-lg font-bold mb-2">WAITING FOR INPUT</p>
+                <p class="text-sm">请先 <span class="text-rose-500">更换 API Key (如果403)</span> 或 <span class="text-green-500">选择正确模型</span></p>
             </div>
         </div>
         <div id="loader" class="hidden text-center py-10 text-cyan-500 text-xs animate-pulse">
-            AI IS ANALYZING... <br> <span class="text-[9px] text-zinc-500">(正在寻找可用模型...)</span>
+            AI IS ANALYZING... (Timeout: 15s)
         </div>
     </main>
 
@@ -128,43 +134,27 @@
     <script>
         // 默认配置
         let CONFIG = {
-            apiKey: "AIzaSyB9ww1axSGsO4iYUt9UaOOJiBAuoa0wYOQ", // 替换为你自己的 Key
-            baseUrl: "https://generativelanguage.googleapis.com"
+            apiKey: "AIzaSyB9ww1axSGsO4iYUt9UaOOJiBAuoa0wYOQ",
+            endpoint: ""
         };
         const TENOR_KEY = "LIVDSRZULELA";
         
-        // 自动降级列表 (优先尝试新模型，失败则回退到配额更多的旧模型)
-        const FALLBACK_MODELS = [
-            "gemini-2.0-flash-exp",  // 首选：最新
-            "gemini-1.5-flash",      // 备用1：稳定且快
-            "gemini-1.5-pro",        // 备用2：强
-            "gemini-pro-vision"      // 保底
-        ];
-
         // DOM
         const logBox = document.getElementById('debug-log');
         const apiKeyInput = document.getElementById('api-key-input');
         const searchInput = document.getElementById('search-input');
         const fileInput = document.getElementById('file-input');
-        const modelBadge = document.getElementById('current-model-badge');
-        const modelNameDisplay = document.getElementById('model-name-display');
+        const modelListEl = document.getElementById('model-list');
 
         // 初始化
-        if(localStorage.getItem('motiflow_v19')) {
-            CONFIG = JSON.parse(localStorage.getItem('motiflow_v19'));
+        if(localStorage.getItem('motiflow_v20')) {
+            CONFIG = JSON.parse(localStorage.getItem('motiflow_v20'));
         }
         apiKeyInput.value = CONFIG.apiKey;
 
         function log(msg, type='normal') {
             const div = document.createElement('div');
-            // 简单的颜色映射
-            let color = 'text-zinc-400';
-            if (type === 'err') color = 'text-red-400';
-            if (type === 'succ') color = 'text-emerald-400';
-            if (type === 'warn') color = 'text-yellow-400';
-            if (type === 'info') color = 'text-blue-400';
-            
-            div.className = color;
+            div.className = type === 'err' ? 'log-err' : (type === 'succ' ? 'log-succ' : (type === 'raw' ? 'log-raw' : 'log-warn'));
             div.innerText = `> ${msg}`;
             logBox.appendChild(div);
             logBox.scrollTop = logBox.scrollHeight;
@@ -175,14 +165,79 @@
             document.getElementById('settings-overlay').classList.toggle('hidden');
         }
 
+        // --- 核心：智能扫描与推荐 ---
+        async function scanModels() {
+            const key = apiKeyInput.value.trim();
+            if(!key) return alert("请先填写 API Key");
+
+            log("Scanning models...", "warn");
+            modelListEl.innerHTML = `<div class="text-zinc-500 p-4 text-center animate-pulse">Scanning...</div>`;
+            
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+                const data = await response.json();
+                
+                if(data.error) throw new Error(data.error.message);
+                if(!data.models) throw new Error("No models found");
+
+                modelListEl.innerHTML = "";
+                
+                // 推荐模型白名单 (经过验证支持图片且稳定的)
+                const stableModels = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-pro', 'gemini-1.5-pro-latest'];
+                // 纯文本模型黑名单
+                const textOnly = ['gemma', 'embedding', 'aqa'];
+
+                data.models.forEach(model => {
+                    const shortName = model.name.replace("models/", "");
+                    
+                    if(model.supportedGenerationMethods?.includes("generateContent")) {
+                        const div = document.createElement('div');
+                        const isRecommended = stableModels.some(s => shortName === s); // 精确匹配
+                        const isTextOnly = textOnly.some(t => shortName.includes(t));
+
+                        div.className = `model-item ${isRecommended ? 'recommended' : ''}`;
+                        
+                        let html = `<div><span class="${isRecommended ? 'text-white' : ''}">${shortName}</span>`;
+                        if(isRecommended) html += `<span class="tag tag-rec">推荐</span>`;
+                        if(isTextOnly) html += `<span class="tag tag-text">仅文本</span>`;
+                        
+                        html += `<div class="opacity-50 text-[9px] truncate">${model.displayName}</div></div>`;
+                        
+                        // 排除不支持的 experimental 模型，避免用户踩坑
+                        if (shortName.includes("banana") || shortName.includes("gemini-3")) {
+                             html += `<span class="text-[9px] text-red-500 opacity-50">Experimental</span>`;
+                        }
+
+                        div.innerHTML = html;
+                        div.onclick = () => selectModel(model.name);
+                        modelListEl.appendChild(div);
+                    }
+                });
+                log(`Found ${data.models.length} models.`, "succ");
+
+            } catch(e) {
+                log(`Scan failed: ${e.message}`, "err");
+                modelListEl.innerHTML = `<div class="text-red-500 p-2 text-xs">Scan Failed: ${e.message}</div>`;
+            }
+        }
+
+        function selectModel(fullName) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/${fullName}:generateContent`;
+            CONFIG.endpoint = url;
+            
+            document.querySelectorAll('.model-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            log(`Selected: ${fullName}`, "succ");
+        }
+
         function saveSettings() {
             CONFIG.apiKey = apiKeyInput.value.trim();
-            localStorage.setItem('motiflow_v19', JSON.stringify(CONFIG));
+            localStorage.setItem('motiflow_v20', JSON.stringify(CONFIG));
             alert("已保存！");
             toggleSettings();
         }
 
-        // --- 核心：带重试和降级的识图 ---
+        // --- 核心：防崩识图逻辑 ---
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -190,76 +245,75 @@
             if(!document.getElementById('settings-panel').classList.contains('open')) toggleSettings();
             
             searchInput.placeholder = "Processing...";
-            log(`--- Starting Smart Analysis ---`, "info");
+            log(`--- New Analysis ---`, "warn");
 
             try {
                 const base64 = await toBase64(file);
-                let successKeywords = "";
-                let usedModel = "";
+                const fullUrl = `${CONFIG.endpoint}?key=${CONFIG.apiKey}`;
+                
+                if (!CONFIG.endpoint) return alert("请先扫描并选择一个模型！");
 
-                // 循环尝试模型
-                for (const model of FALLBACK_MODELS) {
-                    log(`Trying: ${model}...`);
-                    const url = `${CONFIG.baseUrl}/v1beta/models/${model}:generateContent?key=${CONFIG.apiKey}`;
+                // 使用 AbortController 实现 15秒超时
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-                    try {
-                        const response = await fetch(url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                contents: [{ parts: [
-                                    { text: "Output 3 English keywords for Game VFX." },
-                                    { inline_data: { mime_type: "image/jpeg", data: base64.split(',')[1] } }
-                                ]}]
-                            })
-                        });
+                log(`Requesting... (Timeout 15s)`, "raw");
 
-                        const rawText = await response.text();
+                const response = await fetch(fullUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    signal: controller.signal,
+                    body: JSON.stringify({
+                        contents: [{ parts: [
+                            { text: "Output 3 English keywords for Game VFX." },
+                            { inline_data: { mime_type: "image/jpeg", data: base64.split(',')[1] } }
+                        ] }],
+                        // 关键：关闭安全过滤，防止返回空数据
+                        safetySettings: [
+                            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                        ]
+                    })
+                });
 
-                        if (response.ok) {
-                            // 成功！
-                            const data = JSON.parse(rawText);
-                            successKeywords = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                            if (successKeywords) {
-                                log(`✅ Success with ${model}`, "succ");
-                                usedModel = model;
-                                break; // 成功跳出循环
-                            }
-                        } else {
-                            // 处理错误
-                            if (response.status === 429) {
-                                log(`⚠️ 429 Quota Exceeded on ${model}. Switching...`, "warn");
-                            } else if (response.status === 404) {
-                                log(`⚠️ 404 Not Found on ${model}. Switching...`, "warn");
-                            } else {
-                                log(`❌ Error ${response.status}: ${rawText.slice(0,50)}...`, "err");
-                            }
-                        }
-                    } catch (netErr) {
-                        log(`❌ Network Error on ${model}`, "err");
+                clearTimeout(timeoutId);
+                const rawText = await response.text();
+                
+                if (!response.ok) {
+                    log(`API Error (${response.status}): ${rawText}`, "err");
+                    if (response.status === 400 || response.status === 404) {
+                        alert("模型不支持该请求。请换一个【推荐】模型（如 1.5 Flash）再试。");
                     }
+                    throw new Error(rawText);
                 }
 
-                if (successKeywords) {
-                    successKeywords = successKeywords.trim();
-                    log(`Result: ${successKeywords}`, "succ");
+                // 暴力解析
+                try {
+                    const data = JSON.parse(rawText);
+                    const keywords = data.candidates?.[0]?.content?.parts?.[0]?.text;
                     
-                    // 更新 UI
-                    modelBadge.classList.remove('hidden');
-                    modelNameDisplay.innerText = usedModel;
+                    if (!keywords) {
+                        log("⚠️ 空回复 (Blocked/Empty). Raw:", "warn");
+                        log(rawText.slice(0, 300), "raw");
+                        throw new Error("Empty Response");
+                    }
                     
-                    searchInput.value = successKeywords;
-                    updatePortals(successKeywords);
+                    log(`Result: ${keywords}`, "succ");
+                    searchInput.value = keywords;
+                    updatePortals(keywords);
                     runSearch();
-                    
-                    setTimeout(toggleSettings, 1500);
-                } else {
-                    log("💀 All models failed (Quota/Net). Check Key.", "err");
-                    alert("所有模型都不可用。可能是配额耗尽 (429) 或网络不通。");
+                    setTimeout(toggleSettings, 1000);
+
+                } catch (parseErr) {
+                    log("Parse Error: " + parseErr.message, "err");
+                    throw parseErr;
                 }
 
             } catch (err) {
-                log(`FATAL: ${err.message}`, "err");
+                if (err.name === 'AbortError') log("TIMEOUT: 请求超时。模型响应太慢。", "err");
+                else log(`FATAL: ${err.message}`, "err");
             }
         });
 
