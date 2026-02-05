@@ -3,22 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer">
-    <title>Motiflow VFX - 自动巡航版</title>
+    <title>Motiflow VFX - 智能修复版 v14</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #050505; color: #e0e0e0; }
         .glass { background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .search-input:focus { box-shadow: 0 0 20px rgba(0, 229, 255, 0.3); border-color: #00e5ff; }
         .vfx-card { transition: all 0.2s; border: 1px solid #222; }
         .vfx-card:hover { transform: translateY(-4px); border-color: #00e5ff; z-index: 10; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 100; opacity: 0; transition: opacity 0.2s; }
         .modal.active { display: flex; opacity: 1; }
+        .settings-panel { transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .settings-panel.open { transform: translateX(0); }
         
-        /* 终端风格日志 */
-        .terminal-log { font-family: 'Consolas', monospace; font-size: 11px; line-height: 1.4; color: #4ade80; }
-        .terminal-log .error { color: #f87171; }
-        .terminal-log .warn { color: #facc15; }
-        .terminal-log .info { color: #60a5fa; }
+        /* 调试日志区 */
+        .log-container { font-family: 'Consolas', monospace; font-size: 10px; background: #000; border: 1px solid #333; padding: 10px; height: 150px; overflow-y: auto; color: #aaa; margin-bottom: 15px; border-radius: 6px; }
+        .log-line { margin-bottom: 4px; border-bottom: 1px solid #111; padding-bottom: 2px; }
+        .log-error { color: #ff5555; }
+        .log-success { color: #55ff55; }
+        .log-warn { color: #ffff55; }
+        .log-url { color: #55aaff; word-break: break-all; }
     </style>
 </head>
 <body class="min-h-screen bg-[#050505] flex flex-col overflow-x-hidden">
@@ -27,15 +30,12 @@
         <div class="max-w-[1800px] mx-auto px-6 py-4">
             <div class="flex justify-between items-center mb-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-green-600 rounded flex items-center justify-center font-bold text-black shadow-[0_0_15px_rgba(22,163,74,0.5)]">13</div>
-                    <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-green-500 font-normal">| AUTO-PILOT</span></span>
+                    <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center font-bold text-white shadow-[0_0_15px_rgba(37,99,235,0.5)]">14</div>
+                    <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-blue-500 font-normal">| DEBUGGER</span></span>
                 </div>
                 <div class="flex items-center gap-4">
-                    <div id="model-badge" class="px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-[10px] text-zinc-400 font-mono hidden">
-                        USING: <span id="current-model-name" class="text-white">...</span>
-                    </div>
-                    <button onclick="toggleSettings()" class="text-zinc-400 hover:text-white text-xs flex items-center gap-2">
-                        <span class="animate-pulse">🟢</span> 控制台
+                    <button onclick="toggleSettings()" class="text-white bg-zinc-800 px-3 py-1 rounded-full text-xs hover:bg-zinc-700 border border-zinc-600 animate-pulse flex items-center gap-2">
+                        <span>⚙️ 修复连接 (点我)</span>
                     </button>
                 </div>
             </div>
@@ -51,13 +51,13 @@
                 </div>
                 <div class="flex-1 relative">
                     <input type="text" id="search-input" 
-                           class="search-input w-full h-14 bg-black border border-zinc-700 rounded-lg px-6 text-lg text-white placeholder-zinc-600 outline-none transition"
-                           placeholder="AI 就绪..."
+                           class="w-full h-14 bg-black border border-zinc-700 rounded-lg px-6 text-lg text-white placeholder-zinc-600 outline-none transition focus:border-cyan-500"
+                           placeholder="等待连接..."
                            onkeydown="if(event.key === 'Enter') runSearch()">
                     <button onclick="runSearch()" class="absolute right-2 top-2 bottom-2 px-6 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-md transition">搜索</button>
                 </div>
             </div>
-
+            
             <div class="flex gap-4 mt-4 pt-4 border-t border-white/5 overflow-x-auto">
                 <a id="link-huaban" target="_blank" href="https://huaban.com/search/?q=游戏特效" class="px-4 py-2 bg-[#c8222c]/10 text-[#c8222c] border border-[#c8222c]/30 rounded hover:bg-[#c8222c] hover:text-white transition text-xs font-bold whitespace-nowrap">🌸 花瓣网</a>
                 <a id="link-bilibili" target="_blank" href="https://search.bilibili.com/all?keyword=游戏特效" class="px-4 py-2 bg-[#00aeec]/10 text-[#00aeec] border border-[#00aeec]/30 rounded hover:bg-[#00aeec] hover:text-white transition text-xs font-bold whitespace-nowrap">📺 Bilibili</a>
@@ -65,36 +65,48 @@
         </div>
     </nav>
 
-    <div id="settings-panel" class="fixed top-0 right-0 h-full w-[400px] bg-[#0d0d0d] border-l border-zinc-800 z-50 p-6 shadow-2xl flex flex-col gap-4 transform translate-x-full transition-transform duration-300 overflow-y-auto">
+    <div id="settings-panel" class="settings-panel fixed top-0 right-0 h-full w-[420px] bg-[#0d0d0d] border-l border-zinc-800 z-50 p-6 shadow-2xl flex flex-col gap-4 overflow-y-auto">
         <div class="flex justify-between items-center">
-            <h2 class="text-lg font-bold text-white">📡 连接控制台</h2>
+            <h2 class="text-lg font-bold text-white">📡 连接修复中心</h2>
             <button onclick="toggleSettings()" class="text-zinc-500 hover:text-white">✕</button>
         </div>
 
-        <div class="bg-black border border-zinc-800 rounded p-3 h-48 overflow-y-auto terminal-log" id="console-log">
-            <div class="text-zinc-500">> System initialized...</div>
+        <div>
+            <div class="flex justify-between mb-1">
+                <label class="text-xs font-bold text-zinc-500">运行日志</label>
+                <button onclick="clearLog()" class="text-[10px] text-zinc-600 hover:text-white">清空</button>
+            </div>
+            <div id="debug-log" class="log-container">
+                <div class="log-line">Waiting for action...</div>
+            </div>
         </div>
 
-        <div class="space-y-4 pt-4 border-t border-zinc-800">
+        <div class="space-y-4 p-4 bg-zinc-900/50 rounded-lg border border-zinc-800">
             <div>
-                <label class="block text-xs font-bold text-zinc-500 mb-1">API KEY</label>
-                <input type="text" id="api-key-input" class="w-full bg-[#1a1a1a] border border-zinc-700 rounded p-2 text-xs text-white outline-none focus:border-cyan-500">
+                <label class="block text-xs font-bold text-cyan-400 mb-1">API Key</label>
+                <input type="text" id="api-key-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white outline-none focus:border-cyan-500 font-mono">
             </div>
             
             <div>
-                <label class="block text-xs font-bold text-zinc-500 mb-1">BASE URL (代理地址)</label>
-                <select id="proxy-preset" onchange="applyProxyPreset()" class="w-full bg-[#1a1a1a] border border-zinc-700 rounded p-2 text-xs text-white mb-2 outline-none">
-                    <option value="https://generativelanguage.googleapis.com">Google 官方 (需 VPN)</option>
-                    <option value="https://gemini-proxy-v1.vercel.app">公益代理 A</option>
-                    <option value="https://api.v1.gemini.cn.com">公益代理 B (备用)</option>
+                <label class="block text-xs font-bold text-cyan-400 mb-1">代理地址 (Base URL)</label>
+                <select id="proxy-select" onchange="updateProxyInput()" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white mb-2 outline-none">
+                    <option value="https://generativelanguage.googleapis.com">Google 官方 (需全局代理)</option>
+                    <option value="https://gemini-proxy-v1.vercel.app">公益代理 A (推荐尝试)</option>
+                    <option value="custom">自定义...</option>
                 </select>
-                <input type="text" id="base-url-input" class="w-full bg-[#1a1a1a] border border-zinc-700 rounded p-2 text-xs text-zinc-300 outline-none focus:border-cyan-500">
+                <input type="text" id="base-url-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-yellow-300 outline-none focus:border-cyan-500 font-mono" placeholder="https://...">
+                <p class="text-[9px] text-zinc-500 mt-1">* 系统会自动移除多余的 /v1beta 后缀</p>
             </div>
         </div>
 
-        <button onclick="saveSettings()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded font-bold text-sm border border-zinc-700 mt-auto">
-            💾 保存并重置
-        </button>
+        <div class="grid grid-cols-2 gap-3 mt-auto">
+            <button onclick="resetConfig()" class="py-3 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded font-bold text-sm border border-red-900/50 transition">
+                ♻️ 恢复默认
+            </button>
+            <button onclick="saveAndTest()" class="py-3 bg-green-700 hover:bg-green-600 text-white rounded font-bold text-sm transition">
+                💾 保存并测试
+            </button>
+        </div>
     </div>
     <div id="settings-overlay" onclick="toggleSettings()" class="fixed inset-0 bg-black/50 z-40 hidden backdrop-blur-sm"></div>
 
@@ -102,7 +114,7 @@
         <div id="results-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             <div class="col-span-full text-center py-20 text-zinc-700 border-2 border-dashed border-zinc-800 rounded-xl">
                 <p class="text-lg font-bold mb-2">SYSTEM READY</p>
-                <p class="text-sm">请上传图片，系统将自动轮询可用模型</p>
+                <p class="text-sm">请上传图片。如遇 404 报错，请查看右侧日志中的 URL 是否正确。</p>
             </div>
         </div>
         <div id="loader" class="hidden text-center py-10 text-cyan-500 text-xs animate-pulse">LOADING...</div>
@@ -122,88 +134,148 @@
     </div>
 
     <script>
-        // --- 核心配置 ---
-        let CONFIG = {
-            apiKey: "AIzaSyB9ww1axSGsO4iYUt9UaOOJiBAuoa0wYOQ", // 公共 Key
+        // 默认配置
+        const DEFAULT_CONFIG = {
+            apiKey: "AIzaSyB9ww1axSGsO4iYUt9UaOOJiBAuoa0wYOQ",
             baseUrl: "https://generativelanguage.googleapis.com"
         };
         const TENOR_KEY = "LIVDSRZULELA";
+        
+        let CONFIG = { ...DEFAULT_CONFIG };
+        const MODELS = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro-vision"];
 
-        // --- 自动轮询模型列表 ---
-        // 核心逻辑：从新到旧依次尝试，直到不报 404
-        const MODEL_LIST = [
-            "gemini-1.5-flash",        // 首选：最新快
-            "gemini-1.5-flash-latest", // 备用：有时候路径需要 latest
-            "gemini-1.5-pro",          // 备用：更强但慢
-            "gemini-pro-vision",       // 保底：最老最稳
-            "gemini-1.0-pro-vision"    // 终极保底
-        ];
+        // DOM Elements
+        const logContainer = document.getElementById('debug-log');
+        const settingsPanel = document.getElementById('settings-panel');
+        const apiKeyInput = document.getElementById('api-key-input');
+        const baseUrlInput = document.getElementById('base-url-input');
+        const searchInput = document.getElementById('search-input');
+        const fileInput = document.getElementById('file-input');
 
-        // 初始化
-        if(localStorage.getItem('motiflow_v13')) {
-            CONFIG = JSON.parse(localStorage.getItem('motiflow_v13'));
+        // Load Config
+        if(localStorage.getItem('motiflow_v14')) {
+            try {
+                CONFIG = JSON.parse(localStorage.getItem('motiflow_v14'));
+            } catch(e) { console.error("Config load failed"); }
         }
-        document.getElementById('api-key-input').value = CONFIG.apiKey;
-        document.getElementById('base-url-input').value = CONFIG.baseUrl;
+        updateInputFields();
+
+        // 核心：URL 清洗函数 (解决 404 的关键)
+        function sanitizeBaseUrl(url) {
+            let cleanUrl = url.trim();
+            // 移除末尾斜杠
+            while(cleanUrl.endsWith('/')) cleanUrl = cleanUrl.slice(0, -1);
+            // 移除常见的错误后缀
+            cleanUrl = cleanUrl.replace(/\/v1beta\/models$/, "");
+            cleanUrl = cleanUrl.replace(/\/v1beta$/, "");
+            return cleanUrl;
+        }
 
         function log(msg, type = 'normal') {
-            const el = document.getElementById('console-log');
-            const colorClass = type === 'error' ? 'error' : (type === 'warn' ? 'warn' : (type === 'info' ? 'info' : ''));
-            el.innerHTML += `<div class="${colorClass}">> ${msg}</div>`;
-            el.scrollTop = el.scrollHeight;
+            const div = document.createElement('div');
+            div.className = `log-line ${type === 'error' ? 'log-error' : (type === 'success' ? 'log-success' : (type === 'url' ? 'log-url' : ''))}`;
+            div.innerText = `> ${msg}`;
+            logContainer.appendChild(div);
+            logContainer.scrollTop = logContainer.scrollHeight;
         }
+        function clearLog() { logContainer.innerHTML = ''; }
 
         function toggleSettings() {
-            const panel = document.getElementById('settings-panel');
-            const overlay = document.getElementById('settings-overlay');
-            if (panel.classList.contains('translate-x-full')) {
-                panel.classList.remove('translate-x-full');
-                overlay.classList.remove('hidden');
-            } else {
-                panel.classList.add('translate-x-full');
-                overlay.classList.add('hidden');
+            settingsPanel.classList.toggle('open');
+            document.getElementById('settings-overlay').classList.toggle('hidden');
+        }
+
+        function updateInputFields() {
+            apiKeyInput.value = CONFIG.apiKey;
+            baseUrlInput.value = CONFIG.baseUrl;
+        }
+
+        function updateProxyInput() {
+            const select = document.getElementById('proxy-select');
+            if(select.value !== 'custom') baseUrlInput.value = select.value;
+        }
+
+        function resetConfig() {
+            if(!confirm("确定要恢复默认设置吗？")) return;
+            CONFIG = { ...DEFAULT_CONFIG };
+            localStorage.removeItem('motiflow_v14');
+            updateInputFields();
+            log("已恢复默认设置", "warn");
+        }
+
+        async function saveAndTest() {
+            // 保存前先清洗 URL
+            const rawUrl = baseUrlInput.value;
+            const cleanUrl = sanitizeBaseUrl(rawUrl);
+            
+            if (rawUrl !== cleanUrl) {
+                log(`URL 已自动修正: ${rawUrl} -> ${cleanUrl}`, "warn");
+                baseUrlInput.value = cleanUrl;
+            }
+
+            CONFIG.apiKey = apiKeyInput.value.trim();
+            CONFIG.baseUrl = cleanUrl;
+            localStorage.setItem('motiflow_v14', JSON.stringify(CONFIG));
+            
+            log("设置已保存，开始测试...", "success");
+            await testAIConnection();
+        }
+
+        // 测试连接
+        async function testAIConnection() {
+            const url = `${CONFIG.baseUrl}/v1beta/models/gemini-1.5-flash:generateContent?key=${CONFIG.apiKey}`;
+            // 隐藏 Key
+            const maskedUrl = url.replace(/key=[^&]+/, "key=******");
+            
+            log("请求 URL:", "normal");
+            log(maskedUrl, "url");
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: "Hello" }] }] })
+                });
+
+                if (response.ok) {
+                    log("✅ 连接成功 (200 OK)", "success");
+                    alert("连接成功！现在的设置是正确的。");
+                } else {
+                    const txt = await response.text();
+                    log(`❌ 失败 (${response.status})`, "error");
+                    if (response.status === 404) {
+                        log("⚠️ 404: 路径依然不对。请检查代理地址是否需要特殊前缀。", "warn");
+                    } else if (response.status === 400 || response.status === 403) {
+                        log("⚠️ Key 错误: 请检查 API Key", "warn");
+                    }
+                }
+            } catch (e) {
+                log(`❌ 网络错误: ${e.message}`, "error");
+                log("提示: 请检查 VPN 是否开启全局模式", "warn");
             }
         }
 
-        function applyProxyPreset() {
-            document.getElementById('base-url-input').value = document.getElementById('proxy-preset').value;
-        }
-
-        function saveSettings() {
-            CONFIG.apiKey = document.getElementById('api-key-input').value.trim();
-            CONFIG.baseUrl = document.getElementById('base-url-input').value.trim().replace(/\/$/, "");
-            localStorage.setItem('motiflow_v13', JSON.stringify(CONFIG));
-            log("Settings saved.", "info");
-            toggleSettings();
-        }
-
-        // --- 核心：自动轮询请求 ---
-        const fileInput = document.getElementById('file-input');
-        const searchInput = document.getElementById('search-input');
-
+        // 识图逻辑 (带自动轮询)
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
-            // 自动打开控制台让用户看到我们在努力
-            const panel = document.getElementById('settings-panel');
-            if (panel.classList.contains('translate-x-full')) toggleSettings();
-            
-            log(`--- Starting Analysis ---`, "info");
-            searchInput.placeholder = "AI 正在尝试连接...";
+            // 自动打开面板看日志
+            if(!settingsPanel.classList.contains('open')) toggleSettings();
+            clearLog();
+            log("开始识图...", "success");
+            searchInput.placeholder = "AI 正在分析...";
 
             try {
                 const base64 = await toBase64(file);
-                let successModel = null;
-                let keywords = "";
+                let successKeywords = "";
 
-                // 循环尝试模型
-                for (const model of MODEL_LIST) {
-                    log(`Trying model: ${model}...`);
+                // 轮询模型
+                for (const model of MODELS) {
+                    const url = `${CONFIG.baseUrl}/v1beta/models/${model}:generateContent?key=${CONFIG.apiKey}`;
+                    log(`尝试模型: ${model}...`);
                     
                     try {
-                        const url = `${CONFIG.baseUrl}/v1beta/models/${model}:generateContent?key=${CONFIG.apiKey}`;
-                        
                         const response = await fetch(url, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -217,48 +289,34 @@
 
                         if (response.ok) {
                             const data = await response.json();
-                            if (data.candidates && data.candidates[0].content) {
-                                keywords = data.candidates[0].content.parts[0].text.trim();
-                                successModel = model;
-                                log(`✅ SUCCESS with ${model}!`, "info");
-                                break; // 成功了！跳出循环
-                            }
+                            successKeywords = data.candidates[0].content.parts[0].text.trim();
+                            log(`✅ 成功!`, "success");
+                            break; 
                         } else {
-                            if (response.status === 404) {
-                                log(`❌ 404 Not Found on ${model}. Switching...`, "warn");
-                            } else {
-                                const txt = await response.text();
-                                log(`❌ Error ${response.status}: ${txt.slice(0,50)}...`, "error");
-                            }
+                            log(`❌ ${response.status}`, "error");
                         }
                     } catch (netErr) {
-                        log(`❌ Network Error on ${model}: ${netErr.message}`, "error");
+                        log(`❌ Net Error`, "error");
                     }
                 }
 
-                if (successModel) {
-                    // 成功逻辑
-                    document.getElementById('model-badge').classList.remove('hidden');
-                    document.getElementById('current-model-name').innerText = successModel;
-                    
-                    searchInput.value = keywords;
-                    updatePortals(keywords);
+                if (successKeywords) {
+                    searchInput.value = successKeywords;
+                    updatePortals(successKeywords);
                     runSearch();
-                    
-                    // 延迟关闭控制台
-                    setTimeout(() => {
-                        if (!panel.classList.contains('translate-x-full')) toggleSettings();
-                    }, 1500);
+                    // 延迟关闭面板
+                    setTimeout(toggleSettings, 1500);
                 } else {
-                    throw new Error("All models failed.");
+                    log("💀 所有模型均失败。请检查 Key 或更换代理。", "error");
+                    alert("连接失败。请查看右侧日志。");
                 }
 
             } catch (err) {
-                log("💀 FATAL: All models failed. Please check API Key or Proxy.", "error");
-                alert("所有模型尝试都失败了。\n\n请检查控制台里的错误日志。通常是因为：\n1. API Key 无效 (400/403)\n2. 代理地址无法连接");
+                log(`Error: ${err.message}`, "error");
             }
         });
 
+        // 搜索与其他逻辑
         function updatePortals(val) {
             document.getElementById('link-huaban').href = `https://huaban.com/search/?q=${encodeURIComponent(val + " 游戏特效")}`;
             document.getElementById('link-bilibili').href = `https://search.bilibili.com/all?keyword=${encodeURIComponent(val + " Unity教程")}`;
@@ -270,23 +328,21 @@
             document.getElementById('results-grid').innerHTML = "";
             document.getElementById('loader').classList.remove('hidden');
             updatePortals(val);
+            
             const finalQuery = `${val} gameplay vfx -meme`;
-
             try {
                 const res = await fetch(`https://g.tenor.com/v1/search?q=${encodeURIComponent(finalQuery)}&key=${TENOR_KEY}&limit=20&media_filter=minimal`);
                 const data = await res.json();
                 if (data.results?.length > 0) {
                     document.getElementById('results-grid').innerHTML = data.results.map(item => `
-                        <div class="vfx-card bg-[#111] rounded-lg overflow-hidden relative cursor-pointer group aspect-square"
-                             onclick="openModal('${item.media[0].gif.url}', '${item.itemurl}')">
-                            <img src="${item.media[0].tinygif.url}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition duration-300" loading="lazy">
-                        </div>
-                    `).join('');
+                        <div class="vfx-card bg-[#111] rounded-lg overflow-hidden relative cursor-pointer group aspect-square" onclick="openModal('${item.media[0].gif.url}', '${item.itemurl}')">
+                            <img src="${item.media[0].tinygif.url}" class="w-full h-full object-cover opacity-80 hover:opacity-100 transition duration-300">
+                        </div>`).join('');
                 } else {
-                    document.getElementById('results-grid').innerHTML = `<div class="col-span-full text-center py-20 text-zinc-500">Tenor 无结果。</div>`;
+                    document.getElementById('results-grid').innerHTML = `<div class="col-span-full text-center py-20 text-zinc-500">无结果。</div>`;
                 }
             } catch (e) {
-                document.getElementById('results-grid').innerHTML = `<div class="col-span-full text-center py-20 text-red-500">Tenor 搜索失败。</div>`;
+                document.getElementById('results-grid').innerHTML = `<div class="col-span-full text-center py-20 text-red-500">搜索失败。</div>`;
             } finally {
                 document.getElementById('loader').classList.add('hidden');
             }
@@ -300,8 +356,7 @@
         function closeModal() { document.getElementById('preview-modal').classList.remove('active'); }
         async function saveToEagle() {
             try {
-                const url = document.getElementById('modal-img').src;
-                await fetch("http://localhost:44324/api/item/addFromURL", { method: 'POST', body: JSON.stringify({ url: url, name: "VFX_"+Date.now() }) });
+                await fetch("http://localhost:44324/api/item/addFromURL", { method: 'POST', body: JSON.stringify({ url: document.getElementById('modal-img').src, name: "VFX_"+Date.now() }) });
                 alert("✅ Saved!");
             } catch (e) { alert("⚠️ Eagle 未启动"); }
         }
