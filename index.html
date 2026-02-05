@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer">
-    <title>Motiflow VFX - v29 Authorized</title>
+    <title>Motiflow VFX - v30 Doctor</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -15,10 +15,11 @@
         .model-item { cursor: pointer; padding: 10px; border-bottom: 1px solid #222; font-size: 11px; color: #666; display: flex; justify-content: space-between; align-items: center; }
         .model-item:hover { background: #111; color: white; }
         .model-item.active { background: #1e3a8a; color: #93c5fd; border-left: 3px solid #3b82f6; }
-        .tag-rec { background: #064e3b; color: #34d399; padding: 2px 6px; border-radius: 4px; font-size: 9px; }
         .upload-active { animation: pulse-ring 2s infinite; border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
         @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
         .console-box { font-family: 'Consolas', monospace; font-size: 10px; background: #000; padding: 10px; height: 120px; overflow-y: auto; color: #666; margin-top: 10px; border-top: 1px solid #222; }
+        .log-err { color: #f87171; border-left: 2px solid #f87171; padding-left: 5px; } 
+        .log-suc { color: #4ade80; }
     </style>
 </head>
 <body class="min-h-screen bg-[#050505] flex flex-col overflow-x-hidden">
@@ -26,17 +27,23 @@
     <nav class="sticky top-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-md border-b border-white/5">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-orange-600 rounded flex items-center justify-center font-bold text-white">29</div>
-                <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-orange-500 font-normal">| AUTHORIZED</span></span>
+                <div class="w-8 h-8 bg-teal-600 rounded flex items-center justify-center font-bold text-white">30</div>
+                <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-teal-500 font-normal">| DOCTOR</span></span>
             </div>
             
             <div class="flex items-center gap-4">
-                <div class="hidden md:flex items-center gap-2 text-[10px] text-zinc-500 bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">
-                    <span id="eagle-status-dot" class="w-2 h-2 rounded-full bg-red-500"></span>
-                    <span id="eagle-status-text" class="text-zinc-300 font-mono">Eagle: 未授权</span>
+                <div class="hidden md:flex items-center gap-4 text-[10px]">
+                    <div class="flex items-center gap-2 bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">
+                        <span id="ai-status-dot" class="w-2 h-2 rounded-full bg-red-500"></span>
+                        <span id="ai-status-text" class="text-zinc-300 font-mono">AI: 未连接</span>
+                    </div>
+                    <div class="flex items-center gap-2 bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">
+                        <span id="eagle-status-dot" class="w-2 h-2 rounded-full bg-red-500"></span>
+                        <span id="eagle-status-text" class="text-zinc-300 font-mono">Eagle: 未授权</span>
+                    </div>
                 </div>
-                <button onclick="toggleSettings()" class="text-white bg-orange-600 hover:bg-orange-500 text-xs px-3 py-1 rounded border border-orange-500 transition animate-pulse font-bold">
-                    <i class="fas fa-key"></i> 设置 Token
+                <button onclick="toggleSettings()" class="text-white bg-teal-700 hover:bg-teal-600 text-xs px-3 py-1 rounded border border-teal-600 transition animate-pulse font-bold">
+                    <i class="fas fa-wrench"></i> 修复连接
                 </button>
             </div>
         </div>
@@ -45,21 +52,20 @@
     <main class="flex-1 max-w-7xl mx-auto w-full p-6 flex flex-col gap-8">
         
         <section class="flex flex-col md:flex-row gap-6 items-stretch h-auto md:h-52">
-            <div id="drop-area" class="relative group w-full md:w-1/3 border-2 border-dashed border-zinc-800 rounded-2xl hover:border-orange-500 transition cursor-pointer flex flex-col items-center justify-center bg-zinc-900/20 py-8 md:py-0" onclick="triggerUpload()">
+            <div id="drop-area" class="relative group w-full md:w-1/3 border-2 border-dashed border-zinc-800 rounded-2xl hover:border-teal-500 transition cursor-pointer flex flex-col items-center justify-center bg-zinc-900/20 py-8 md:py-0" onclick="triggerUpload()">
                 <input type="file" id="file-input" class="hidden" accept="image/*">
                 <div id="upload-hint" class="text-center">
-                    <i class="fas fa-cloud-upload-alt text-4xl mb-3 text-zinc-600 group-hover:text-orange-500 transition"></i>
-                    <p class="text-xs text-zinc-500 font-bold group-hover:text-zinc-300">点击 / 拖拽图片</p>
-                    <p class="text-[10px] text-zinc-600 mt-1">需先在右上角填入 Eagle Token</p>
+                    <i class="fas fa-cloud-upload-alt text-4xl mb-3 text-zinc-600 group-hover:text-teal-500 transition"></i>
+                    <p class="text-xs text-zinc-500 font-bold group-hover:text-zinc-300">点击 / 拖拽 / 粘贴</p>
+                    <p class="text-[10px] text-zinc-600 mt-1">网络诊断模块已加载</p>
                 </div>
                 <img id="preview-thumb" class="hidden w-32 h-32 object-contain rounded shadow-lg z-10 cursor-grab active:cursor-grabbing border border-zinc-700 bg-black" draggable="true" title="按住我，拖进 Eagle 搜索框！">
             </div>
 
             <div class="w-full md:w-2/3 bg-black border border-zinc-800 rounded-2xl p-4 flex flex-col relative">
                 <div class="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
-                    <span class="text-xs font-bold text-orange-400"><i class="fas fa-robot"></i> AI ANALYSIS HUB</span>
+                    <span class="text-xs font-bold text-teal-400"><i class="fas fa-heartbeat"></i> AI STATUS</span>
                     <div id="color-info" class="hidden flex items-center gap-2">
-                        <span class="text-[10px] text-zinc-500">主色调:</span>
                         <div id="color-dot" class="w-3 h-3 rounded-full border border-white/20"></div>
                     </div>
                     <button onclick="resetAll()" class="text-[10px] text-zinc-500 hover:text-white flex items-center gap-1 bg-zinc-900 px-2 py-1 rounded">
@@ -70,20 +76,20 @@
                 <div class="flex-1 flex flex-col justify-center gap-4">
                     <div class="flex items-center gap-3">
                         <span class="text-[10px] text-zinc-500 w-16 text-right font-bold">CN (花瓣)</span>
-                        <input type="text" id="cn-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-orange-500 outline-none transition" placeholder="等待分析...">
+                        <input type="text" id="cn-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-teal-500 outline-none transition" placeholder="等待分析...">
                     </div>
                     <div class="flex items-center gap-3">
                         <span class="text-[10px] text-zinc-500 w-16 text-right font-bold">EN (Eagle)</span>
-                        <input type="text" id="en-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-orange-500 outline-none transition" placeholder="等待分析...">
+                        <input type="text" id="en-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-teal-500 outline-none transition" placeholder="等待分析...">
                     </div>
                 </div>
                 
                 <div class="mt-4 flex justify-between items-center">
                     <div class="flex items-center gap-2 text-[10px] text-zinc-500">
                         <i class="fas fa-info-circle"></i>
-                        <span>不满意？请按住左侧预览图 <b class="text-orange-400">拖入 Eagle</b></span>
+                        <span>不满意？按住左侧预览图 <b class="text-teal-400">拖入 Eagle</b></span>
                     </div>
-                    <button onclick="refreshLinks()" class="bg-orange-700 hover:bg-orange-600 text-white text-xs px-4 py-2 rounded font-bold shadow-lg shadow-orange-900/50 transition">
+                    <button onclick="refreshLinks()" class="bg-teal-700 hover:bg-teal-600 text-white text-xs px-4 py-2 rounded font-bold shadow-lg shadow-teal-900/50 transition">
                         <i class="fas fa-sync-alt"></i> 刷新搜索
                     </button>
                 </div>
@@ -92,12 +98,12 @@
 
         <section class="border-t border-zinc-900 pt-6 transition-all duration-300">
             <h2 class="text-xs font-bold text-zinc-500 mb-4 flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Eagle 本地库
+                <span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span> Eagle 本地库
             </h2>
             <div id="results-grid" class="grid grid-cols-2 md:grid-cols-6 gap-4 min-h-[100px]">
                 <div class="col-span-full text-center py-10 text-zinc-700 text-xs">
                     等待图片上传...<br>
-                    <span class="text-orange-500 mt-2 block opacity-80">(如果一直无结果，请检查 Token)</span>
+                    <span class="text-teal-500 mt-2 block opacity-80">(如果不显示，请点击右上角【修复连接】设置 Token)</span>
                 </div>
             </div>
         </section>
@@ -125,85 +131,135 @@
 
     </main>
 
-    <div id="settings-panel" class="settings-panel fixed top-0 right-0 h-full w-[400px] bg-[#0d0d0d] border-l border-zinc-800 z-50 p-6 shadow-2xl flex flex-col gap-4">
+    <div id="settings-panel" class="settings-panel fixed top-0 right-0 h-full w-[450px] bg-[#0d0d0d] border-l border-zinc-800 z-50 p-6 shadow-2xl flex flex-col gap-4 overflow-y-auto">
         <div class="flex justify-between items-center">
-            <h2 class="font-bold text-white">⚙️ 设置</h2>
+            <h2 class="font-bold text-white">📡 连接修复中心</h2>
             <button onclick="toggleSettings()" class="text-zinc-500 hover:text-white">✕</button>
         </div>
         
-        <div>
-            <label class="block text-xs font-bold text-zinc-500 mb-1">AI API Key</label>
-            <input type="text" id="api-key-input" class="w-full bg-zinc-900 border border-zinc-700 rounded p-2 text-xs text-white font-mono" readonly>
+        <div class="p-3 bg-zinc-900 border border-zinc-700 rounded">
+            <div class="flex justify-between items-center mb-2">
+                <label class="text-xs font-bold text-teal-400">网络与地址配置</label>
+                <button onclick="testConnection()" class="text-[10px] bg-teal-700 text-white px-2 py-1 rounded">🧪 测试 AI 连接</button>
+            </div>
+            
+            <div class="mb-2">
+                <label class="block text-[9px] text-zinc-500 mb-1">Base URL (如果是代理，请修改这里)</label>
+                <input type="text" id="base-url-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white font-mono" placeholder="https://generativelanguage.googleapis.com">
+                <div class="flex gap-2 mt-1">
+                    <button onclick="setPreset('google')" class="text-[9px] text-zinc-500 hover:text-white underline">恢复官方 Google</button>
+                    <button onclick="setPreset('proxy')" class="text-[9px] text-zinc-500 hover:text-white underline">使用常用代理</button>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[9px] text-zinc-500 mb-1">API Key</label>
+                <input type="text" id="api-key-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white font-mono">
+            </div>
         </div>
 
         <div class="p-3 bg-orange-900/20 border border-orange-700/50 rounded">
-            <label class="block text-xs font-bold text-orange-400 mb-1">Eagle API Token (必填)</label>
-            <p class="text-[10px] text-zinc-400 mb-2">打开 Eagle > 偏好设置 > 开发者 > 开启 API 并复制 Token</p>
-            <input type="text" id="eagle-token-input" class="w-full bg-black border border-orange-700 rounded p-2 text-xs text-white font-mono" placeholder="粘贴 Eagle Token 到这里">
+            <label class="block text-xs font-bold text-orange-400 mb-1">Eagle Token (必填)</label>
+            <p class="text-[10px] text-zinc-400 mb-2">Eagle > 偏好设置 > 开发者 > 开启 API > 复制 Token</p>
+            <input type="text" id="eagle-token-input" class="w-full bg-black border border-orange-700 rounded p-2 text-xs text-white font-mono" placeholder="在此粘贴 Token">
+            <button onclick="checkEagleStatus()" class="mt-2 w-full text-[10px] bg-orange-800 text-white py-1 rounded">🔌 测试 Eagle 连接</button>
         </div>
 
-        <div class="flex-1 flex flex-col min-h-0">
+        <div class="flex-1 flex flex-col min-h-[150px]">
             <div class="flex justify-between items-center mb-2">
-                <label class="block text-xs font-bold text-zinc-500">模型列表</label>
-                <button onclick="scanModels()" class="text-[10px] text-orange-400 hover:text-orange-300">刷新</button>
+                <label class="block text-xs font-bold text-zinc-500">模型选择</label>
+                <button onclick="scanModels()" class="text-[10px] text-teal-400 hover:text-teal-300">刷新</button>
             </div>
             <div id="model-list" class="flex-1 bg-zinc-900 border border-zinc-700 rounded overflow-y-auto"></div>
         </div>
         
         <div class="console-box" id="debug-log">Log initialized.</div>
 
-        <button onclick="saveSettings()" class="w-full py-3 bg-orange-600 hover:bg-orange-500 text-white rounded text-sm font-bold">保存并应用</button>
+        <button onclick="saveSettings()" class="w-full py-3 bg-teal-600 hover:bg-teal-500 text-white rounded text-sm font-bold">保存并应用</button>
     </div>
     <div id="settings-overlay" onclick="toggleSettings()" class="fixed inset-0 bg-black/50 z-40 hidden backdrop-blur-sm"></div>
 
     <script>
-        const NEW_KEY = "AIzaSyAZfCY02KqNU3LaQhNULMkKaPhtoGZpBpU";
+        const DEFAULT_KEY = "AIzaSyAZfCY02KqNU3LaQhNULMkKaPhtoGZpBpU";
         const EAGLE_API_URL = "http://127.0.0.1:41595";
         
-        const FALLBACK_MODELS = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro"];
-
         let CONFIG = {
-            apiKey: NEW_KEY,
-            endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+            apiKey: DEFAULT_KEY,
+            baseUrl: "https://generativelanguage.googleapis.com", // 新增 Base URL 支持
+            endpoint: "/v1beta/models/gemini-1.5-flash:generateContent", // 相对路径
             eagleToken: ""
         };
         
         let targetColorRGB = null;
 
         function init() {
-            if(localStorage.getItem('motiflow_v29')) {
-                const saved = JSON.parse(localStorage.getItem('motiflow_v29'));
+            if(localStorage.getItem('motiflow_v30')) {
+                const saved = JSON.parse(localStorage.getItem('motiflow_v30'));
+                if(saved.baseUrl) CONFIG.baseUrl = saved.baseUrl;
                 if(saved.endpoint) CONFIG.endpoint = saved.endpoint;
                 if(saved.eagleToken) CONFIG.eagleToken = saved.eagleToken;
+                // Key 保持强制更新或从缓存读
+                CONFIG.apiKey = DEFAULT_KEY; 
             }
-            CONFIG.apiKey = NEW_KEY;
             
+            // 填充 UI
             document.getElementById('api-key-input').value = CONFIG.apiKey;
+            document.getElementById('base-url-input').value = CONFIG.baseUrl;
             document.getElementById('eagle-token-input').value = CONFIG.eagleToken;
             
-            scanModels(true);
             checkEagleStatus();
+            testConnection(true); // 静默测试 AI
+        }
+
+        // --- 网络连接测试 ---
+        async function testConnection(silent = false) {
+            const statusDot = document.getElementById('ai-status-dot');
+            const statusText = document.getElementById('ai-status-text');
+            
+            if(!silent) log(`Testing connection to: ${CONFIG.baseUrl}...`);
+
+            try {
+                // 发送一个简单的文本请求测试连通性
+                const url = `${CONFIG.baseUrl}${CONFIG.endpoint}?key=${CONFIG.apiKey}`;
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ contents: [{ parts: [{ text: "Hi" }] }] })
+                });
+
+                if(res.ok) {
+                    statusDot.className = "w-2 h-2 rounded-full bg-green-500";
+                    statusText.innerText = "AI: 在线";
+                    if(!silent) log("✅ AI Connection Success!", "suc");
+                    scanModels(true); // 连接成功后再扫描模型
+                } else {
+                    throw new Error(res.status);
+                }
+            } catch(e) {
+                statusDot.className = "w-2 h-2 rounded-full bg-red-500";
+                statusText.innerText = "AI: 连接失败";
+                if(!silent) log(`❌ AI Connect Failed: ${e.message}. Check VPN or Base URL.`, "err");
+            }
         }
 
         async function checkEagleStatus() {
             if(!CONFIG.eagleToken) {
-                document.getElementById('eagle-status-text').innerText = "Eagle: 未配置 Token";
+                document.getElementById('eagle-status-text').innerText = "Eagle: 无 Token";
                 return;
             }
             try {
-                // 验证 API 是否通，带上 Token
                 const res = await fetch(`${EAGLE_API_URL}/api/application/info?token=${CONFIG.eagleToken}`);
                 if(res.ok) {
                     document.getElementById('eagle-status-dot').className = "w-2 h-2 rounded-full bg-green-500";
-                    document.getElementById('eagle-status-text').innerText = "Eagle: 已连接";
-                    log("Eagle API Connected!", "suc");
+                    document.getElementById('eagle-status-text').innerText = "Eagle: 在线";
+                    log("Eagle Connected.", "suc");
                 } else {
                     throw new Error("401");
                 }
             } catch(e) {
                 document.getElementById('eagle-status-dot').className = "w-2 h-2 rounded-full bg-red-500";
-                document.getElementById('eagle-status-text').innerText = "Eagle: 失败 (Token错误或未开启)";
-                log("Eagle Connect Fail. Check Token.", "err");
+                document.getElementById('eagle-status-text').innerText = "Eagle: 离线";
+                log("Eagle Connect Failed. Is app running?", "err");
             }
         }
 
@@ -214,30 +270,18 @@
 
         function log(msg, type='info') {
             const box = document.getElementById('debug-log');
-            const cls = type === 'err' ? 'log-err' : (type === 'suc' ? 'log-suc' : 'log-warn');
+            const cls = type === 'err' ? 'log-err' : (type === 'suc' ? 'log-suc' : '');
             box.innerHTML += `<div class="${cls}">> ${msg}</div>`;
             box.scrollTop = box.scrollHeight;
         }
 
-        function extractColor(imgElement) {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 1; canvas.height = 1;
-            ctx.drawImage(imgElement, 0, 0, 1, 1);
-            const p = ctx.getImageData(0, 0, 1, 1).data;
-            targetColorRGB = { r: p[0], g: p[1], b: p[2] };
-            document.getElementById('color-dot').style.backgroundColor = `rgb(${p[0]},${p[1]},${p[2]})`;
-            document.getElementById('color-info').classList.remove('hidden');
+        function setPreset(type) {
+            const input = document.getElementById('base-url-input');
+            if(type === 'google') input.value = "https://generativelanguage.googleapis.com";
+            if(type === 'proxy') input.value = "https://gemini-proxy-v1.vercel.app"; // 示例代理
         }
 
-        function getColorDistance(rgb1, rgb2) {
-            return Math.sqrt(Math.pow(rgb1.r-rgb2.r,2) + Math.pow(rgb1.g-rgb2.g,2) + Math.pow(rgb1.b-rgb2.b,2));
-        }
-        function hexToRgb(hex) {
-            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
-        }
-
+        // --- 核心逻辑 ---
         const dropArea = document.getElementById('drop-area');
         const fileInput = document.getElementById('file-input');
 
@@ -263,6 +307,25 @@
             }
         });
 
+        // 颜色提取
+        function extractColor(imgElement) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 1; canvas.height = 1;
+            ctx.drawImage(imgElement, 0, 0, 1, 1);
+            const p = ctx.getImageData(0, 0, 1, 1).data;
+            targetColorRGB = { r: p[0], g: p[1], b: p[2] };
+            document.getElementById('color-dot').style.backgroundColor = `rgb(${p[0]},${p[1]},${p[2]})`;
+            document.getElementById('color-info').classList.remove('hidden');
+        }
+        function getColorDistance(rgb1, rgb2) {
+            return Math.sqrt(Math.pow(rgb1.r-rgb2.r,2) + Math.pow(rgb1.g-rgb2.g,2) + Math.pow(rgb1.b-rgb2.b,2));
+        }
+        function hexToRgb(hex) {
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+        }
+
         async function handleFiles(file) {
             const url = URL.createObjectURL(file);
             const img = document.getElementById('preview-thumb');
@@ -273,73 +336,52 @@
 
             document.getElementById('cn-keywords').value = ""; 
             document.getElementById('en-keywords').value = "";
-            document.getElementById('cn-keywords').placeholder = "AI 分析中...";
-            document.getElementById('en-keywords').placeholder = "Analyzing...";
-            document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-orange-500 animate-pulse text-xs">AI 思考中...</div>';
+            document.getElementById('cn-keywords').placeholder = "连接 AI 中...";
+            document.getElementById('en-keywords').placeholder = "Connecting...";
+            document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-teal-500 animate-pulse text-xs">正在发送请求...</div>';
 
             try {
                 const base64 = await toBase64(file);
-                const prompt = `You are a backend API. Identify the Game VFX style and element.
+                const prompt = `You are a backend API. Identify the Game VFX.
 Output ONLY a JSON object. No markdown.
 Structure: {"cn": "Chinese Keywords for Huaban", "en": "English Keywords for ArtStation"}
+Example: {"cn": "Unity 刀光", "en": "Slash VFX"}
 `;
-                let tryList = [CONFIG.endpoint];
-                FALLBACK_MODELS.forEach(m => {
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`;
-                    if(!tryList.includes(url)) tryList.push(url);
+                
+                // 使用配置的 Base URL
+                const url = `${CONFIG.baseUrl}${CONFIG.endpoint}?key=${CONFIG.apiKey}`;
+                
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        contents: [{ parts: [
+                            { text: prompt },
+                            { inline_data: { mime_type: "image/jpeg", data: base64.split(',')[1] } }
+                        ]}],
+                        safetySettings: [{ category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" }]
+                    })
                 });
 
-                let successResult = null;
-
-                for (let url of tryList) {
-                    const modelName = url.match(/models\/(.*?):/)?.[1];
-                    try {
-                        const res = await fetch(`${url}?key=${CONFIG.apiKey}`, {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({
-                                contents: [{ parts: [
-                                    { text: prompt },
-                                    { inline_data: { mime_type: "image/jpeg", data: base64.split(',')[1] } }
-                                ]}],
-                                safetySettings: [{ category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" }]
-                            })
-                        });
-
-                        const raw = await res.text();
-                        if (!res.ok) {
-                            if (res.status === 429 || res.status === 404) continue; 
-                            throw new Error(raw);
-                        }
-
-                        let jsonStr = raw;
-                        if(raw.includes('```json')) jsonStr = raw.split('```json')[1].split('```')[0].trim();
-                        else if(raw.includes('```')) jsonStr = raw.split('```')[1].split('```')[0].trim();
-                        
-                        const parsed = JSON.parse(jsonStr);
-                        const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-                        
-                        if(text) {
-                            try {
-                                successResult = JSON.parse(text.replace(/```json/g,'').replace(/```/g,'').trim());
-                            } catch(e) {
-                                successResult = { cn: text, en: text };
-                            }
-                            log(`✅ AI Success (${modelName})`, 'suc');
-                            break;
-                        }
-                    } catch(e) { console.log(e); }
+                if(!res.ok) throw new Error(`Status ${res.status}`);
+                const raw = await res.text();
+                
+                let successResult = { cn: "识别失败", en: "VFX" };
+                try {
+                    let jsonStr = raw.replace(/```json/g,'').replace(/```/g,'').trim();
+                    successResult = JSON.parse(jsonStr);
+                } catch(e) {
+                    // 暴力容错
+                    log("JSON Parse Error, using raw text", "warn");
                 }
 
-                if (!successResult) throw new Error("AI 识别失败");
-
-                document.getElementById('cn-keywords').value = successResult.cn || "游戏特效";
-                document.getElementById('en-keywords').value = successResult.en || "Game VFX";
+                document.getElementById('cn-keywords').value = successResult.cn || "特效";
+                document.getElementById('en-keywords').value = successResult.en || "VFX";
                 refreshLinks(successResult.en);
 
             } catch(e) {
-                alert("失败: " + e.message);
-                document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center text-red-500 text-xs">出错</div>';
+                log(e.message, 'err');
+                document.getElementById('results-grid').innerHTML = `<div class="col-span-full text-center text-red-500 text-xs">请求失败 (${e.message})<br>请点击右上角设置检查连接</div>`;
             } finally {
                 document.getElementById('drop-area').classList.remove('upload-active');
                 fileInput.value = ''; 
@@ -361,8 +403,7 @@ Structure: {"cn": "Chinese Keywords for Huaban", "en": "English Keywords for Art
 
         async function searchEagle(keyword) {
             if(!CONFIG.eagleToken) {
-                document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-red-500 text-xs">⚠️ 请点击右上角设置 Eagle Token</div>';
-                toggleSettings();
+                document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-red-500 text-xs">未配置 Eagle Token</div>';
                 return;
             }
 
@@ -370,7 +411,6 @@ Structure: {"cn": "Chinese Keywords for Huaban", "en": "English Keywords for Art
             grid.innerHTML = '<div class="col-span-full text-center py-10 text-zinc-500 text-xs">搜索本地库...</div>';
             
             try {
-                // v29: 带 Token 的请求
                 let apiUrl = `${EAGLE_API_URL}/api/item/list?keyword=${encodeURIComponent(keyword)}&limit=100&token=${CONFIG.eagleToken}`;
                 const res = await fetch(apiUrl);
                 const json = await res.json();
@@ -388,10 +428,9 @@ Structure: {"cn": "Chinese Keywords for Huaban", "en": "English Keywords for Art
                     }
 
                     grid.innerHTML = items.slice(0, 18).map(item => {
-                        // v29: 图片链接也需要 Token
-                        const thumbUrl = `${EAGLE_API_URL}/api/item/thumbnail?id=${item.id}&token=${CONFIG.eagleToken}`;
+                        const thumbUrl = `${EAGLE_API_URL}/api/item/thumbnail?id=${item.id}&token=${CONFIG.eagleToken}&t=${Date.now()}`;
                         return `
-                        <div class="bg-zinc-900 rounded overflow-hidden cursor-pointer opacity-90 hover:opacity-100 transition border border-zinc-800 hover:border-orange-500 relative group" onclick="window.open('eagle://item/${item.id}')">
+                        <div class="bg-zinc-900 rounded overflow-hidden cursor-pointer opacity-90 hover:opacity-100 transition border border-zinc-800 hover:border-teal-500 relative group" onclick="window.open('eagle://item/${item.id}')">
                             <div class="aspect-square relative">
                                 <img src="${thumbUrl}" class="w-full h-full object-cover" referrerpolicy="no-referrer">
                             </div>
@@ -399,10 +438,10 @@ Structure: {"cn": "Chinese Keywords for Huaban", "en": "English Keywords for Art
                         </div>
                     `}).join('');
                 } else {
-                    grid.innerHTML = '<div class="col-span-full text-center py-10 text-zinc-600 text-xs">本地库无相关结果</div>';
+                    grid.innerHTML = '<div class="col-span-full text-center py-10 text-zinc-600 text-xs">本地无相关结果，请把左侧图拖入 Eagle</div>';
                 }
             } catch(e) {
-                grid.innerHTML = `<div class="col-span-full text-center py-10 text-red-500 text-xs">连接失败，请检查 Token</div>`;
+                grid.innerHTML = `<div class="col-span-full text-center py-10 text-red-500 text-xs">Eagle 连接错误 (Token无效或服务未开)</div>`;
             }
         }
 
@@ -419,18 +458,20 @@ Structure: {"cn": "Chinese Keywords for Huaban", "en": "English Keywords for Art
         async function scanModels(silent = false) {
             const list = document.getElementById('model-list');
             try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${CONFIG.apiKey}`);
+                // 使用配置的 Base URL 扫描
+                const url = `${CONFIG.baseUrl}/v1beta/models?key=${CONFIG.apiKey}`;
+                const res = await fetch(url);
                 const data = await res.json();
                 list.innerHTML = "";
-                const recommended = ['gemini-1.5-flash', 'gemini-1.5-pro'];
+                const rec = ['gemini-1.5-flash', 'gemini-1.5-pro'];
                 data.models.forEach(m => {
                     if(m.supportedGenerationMethods?.includes('generateContent') && !m.name.includes('banana')) {
                         const name = m.name.replace('models/', '');
                         const div = document.createElement('div');
                         div.className = `model-item ${CONFIG.endpoint.includes(name)?'active':''}`;
-                        div.innerHTML = `<span>${name}</span>${recommended.includes(name)?'<span class="tag-rec">推荐</span>':''}`;
+                        div.innerHTML = `<span>${name}</span>${rec.includes(name)?'<span class="tag-rec">推荐</span>':''}`;
                         div.onclick = () => {
-                            CONFIG.endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${name}:generateContent`;
+                            CONFIG.endpoint = `/v1beta/models/${name}:generateContent`;
                             saveSettings();
                         };
                         list.appendChild(div);
@@ -440,11 +481,13 @@ Structure: {"cn": "Chinese Keywords for Huaban", "en": "English Keywords for Art
         }
 
         function saveSettings() {
+            CONFIG.baseUrl = document.getElementById('base-url-input').value.trim().replace(/\/$/, ""); // 去除末尾斜杠
             CONFIG.eagleToken = document.getElementById('eagle-token-input').value.trim();
-            localStorage.setItem('motiflow_v29', JSON.stringify(CONFIG));
-            alert("配置已保存");
+            localStorage.setItem('motiflow_v30', JSON.stringify(CONFIG));
+            alert("设置已保存");
             toggleSettings();
-            checkEagleStatus(); // 重新检查
+            testConnection(true);
+            checkEagleStatus();
         }
 
         function toBase64(file) {
