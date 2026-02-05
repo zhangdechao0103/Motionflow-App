@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer">
-    <title>Motiflow VFX - v34 Force Render</title>
+    <title>Motiflow VFX - v35 Hardcoded</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #050505; color: #e0e0e0; }
         
+        /* 界面动效 */
         .portal-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #222; position: relative; overflow: hidden; }
         .portal-card:hover { transform: translateY(-5px); border-color: var(--accent-color); box-shadow: 0 10px 30px -10px var(--shadow-color); }
         .settings-panel { transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -17,8 +18,9 @@
         .upload-active { animation: pulse-ring 2s infinite; border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
         @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
         
-        .model-item { cursor: pointer; padding: 10px; border-bottom: 1px solid #222; font-size: 11px; color: #666; display: flex; justify-content: space-between; align-items: center; }
-        .model-item:hover { background: #111; color: white; }
+        /* 模型列表样式 */
+        .model-item { cursor: pointer; padding: 12px; border-bottom: 1px solid #222; font-size: 11px; color: #888; display: flex; justify-content: space-between; align-items: center; transition: background 0.2s; }
+        .model-item:hover { background: #1a1a1a; color: white; }
         .model-item.active { background: #1e3a8a; color: #93c5fd; border-left: 3px solid #3b82f6; }
         
         .console-box { font-family: 'Consolas', monospace; font-size: 10px; background: #000; padding: 10px; height: 120px; overflow-y: auto; color: #666; margin-top: 10px; border-top: 1px solid #222; }
@@ -35,15 +37,15 @@
     <nav class="sticky top-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-md border-b border-white/5">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-pink-600 rounded flex items-center justify-center font-bold text-white">34</div>
-                <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-pink-500 font-normal">| FORCE</span></span>
+                <div class="w-8 h-8 bg-lime-600 rounded flex items-center justify-center font-bold text-white">35</div>
+                <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-lime-500 font-normal">| FALLBACK</span></span>
             </div>
             
             <div class="flex items-center gap-4">
                 <div class="hidden md:flex items-center gap-2 text-[10px]">
                     <div class="bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800 flex items-center gap-2">
                         <span id="ai-status-dot" class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
-                        <span id="current-model-name" class="text-zinc-300 font-mono">扫描中...</span>
+                        <span id="current-model-name" class="text-zinc-300 font-mono">加载中...</span>
                     </div>
                     <div class="bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800 flex items-center gap-2">
                         <span id="eagle-status-dot" class="w-2 h-2 rounded-full bg-red-500"></span>
@@ -60,19 +62,19 @@
     <main class="flex-1 max-w-7xl mx-auto w-full p-6 flex flex-col gap-8">
         
         <section class="flex flex-col md:flex-row gap-6 items-stretch h-auto md:h-52">
-            <div id="drop-area" class="relative group w-full md:w-1/3 border-2 border-dashed border-zinc-800 rounded-2xl hover:border-pink-500 transition cursor-pointer flex flex-col items-center justify-center bg-zinc-900/20 py-8 md:py-0" onclick="triggerUpload()">
+            <div id="drop-area" class="relative group w-full md:w-1/3 border-2 border-dashed border-zinc-800 rounded-2xl hover:border-lime-500 transition cursor-pointer flex flex-col items-center justify-center bg-zinc-900/20 py-8 md:py-0" onclick="triggerUpload()">
                 <input type="file" id="file-input" class="hidden" accept="image/*">
                 <div id="upload-hint" class="text-center">
-                    <i class="fas fa-cloud-upload-alt text-4xl mb-3 text-zinc-600 group-hover:text-pink-500 transition"></i>
+                    <i class="fas fa-cloud-upload-alt text-4xl mb-3 text-zinc-600 group-hover:text-lime-500 transition"></i>
                     <p class="text-xs text-zinc-500 font-bold group-hover:text-zinc-300">点击 / 拖拽 / 粘贴</p>
-                    <p class="text-[10px] text-zinc-600 mt-1">v34 强制渲染引擎</p>
+                    <p class="text-[10px] text-zinc-600 mt-1">内置硬核模型列表，断网可用</p>
                 </div>
-                <img id="preview-thumb" class="hidden w-32 h-32 object-contain rounded shadow-lg z-10 cursor-grab active:cursor-grabbing border border-zinc-700 bg-black" draggable="true" title="按住拖拽至 Eagle">
+                <img id="preview-thumb" class="hidden w-32 h-32 object-contain rounded shadow-lg z-10 cursor-grab active:cursor-grabbing border border-zinc-700 bg-black" draggable="true" title="按住我，拖进 Eagle 搜索框！">
             </div>
 
             <div class="w-full md:w-2/3 bg-black border border-zinc-800 rounded-2xl p-4 flex flex-col relative">
                 <div class="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
-                    <span class="text-xs font-bold text-pink-400"><i class="fas fa-magic"></i> AI ANALYSIS HUB</span>
+                    <span class="text-xs font-bold text-lime-400"><i class="fas fa-magic"></i> AI ANALYSIS HUB</span>
                     
                     <div id="color-info" class="hidden flex items-center gap-2">
                         <div id="color-dot" class="w-3 h-3 rounded-full border border-white/20"></div>
@@ -86,20 +88,20 @@
                 <div class="flex-1 flex flex-col justify-center gap-4">
                     <div class="flex items-center gap-3">
                         <span class="text-[10px] text-zinc-500 w-16 text-right font-bold">CN (花瓣)</span>
-                        <input type="text" id="cn-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-pink-500 outline-none transition" placeholder="AI 准备中...">
+                        <input type="text" id="cn-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-lime-500 outline-none transition" placeholder="等待分析...">
                     </div>
                     <div class="flex items-center gap-3">
                         <span class="text-[10px] text-zinc-500 w-16 text-right font-bold">EN (Eagle)</span>
-                        <input type="text" id="en-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-pink-500 outline-none transition" placeholder="AI Ready...">
+                        <input type="text" id="en-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-lime-500 outline-none transition" placeholder="等待分析...">
                     </div>
                 </div>
                 
                 <div class="mt-4 flex justify-between items-center">
                     <div class="flex items-center gap-2 text-[10px] text-zinc-500">
                         <i class="fas fa-info-circle"></i>
-                        <span>支持将左侧图 <b class="text-pink-400">拖入 Eagle 搜索框</b></span>
+                        <span>支持将左侧图 <b class="text-lime-400">拖入 Eagle 搜索框</b></span>
                     </div>
-                    <button onclick="refreshLinks()" class="bg-pink-600 hover:bg-pink-500 text-white text-xs px-4 py-2 rounded font-bold shadow-lg shadow-pink-900/50 transition">
+                    <button onclick="refreshLinks()" class="bg-lime-700 hover:bg-lime-600 text-white text-xs px-4 py-2 rounded font-bold shadow-lg shadow-lime-900/50 transition">
                         <i class="fas fa-sync-alt"></i> 刷新搜索
                     </button>
                 </div>
@@ -108,12 +110,12 @@
 
         <section class="border-t border-zinc-900 pt-6 transition-all duration-300">
             <h2 class="text-xs font-bold text-zinc-500 mb-4 flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></span> Eagle 本地库 (Blob 渲染)
+                <span class="w-2 h-2 rounded-full bg-lime-500 animate-pulse"></span> Eagle 本地库 (Blob 渲染)
             </h2>
             <div id="results-grid" class="grid grid-cols-2 md:grid-cols-6 lg:grid-cols-8 gap-4 min-h-[100px]">
                 <div class="col-span-full text-center py-10 text-zinc-700 text-xs">
                     等待图片上传...<br>
-                    <span class="text-pink-500 mt-2 block opacity-80">(若无结果，请检查 Token 并开启 API)</span>
+                    <span class="text-lime-500 mt-2 block opacity-80">(若无结果，请检查 Token 并开启 API)</span>
                 </div>
             </div>
         </section>
@@ -148,31 +150,30 @@
         </div>
         
         <div class="p-3 bg-zinc-900 border border-zinc-700 rounded">
-            <label class="text-xs font-bold text-pink-400 block mb-2">Google API Key (本地存储)</label>
+            <label class="text-xs font-bold text-lime-400 block mb-2">Google API Key</label>
             <input type="text" id="api-key-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white font-mono mb-2" placeholder="AIzaSy...">
             
-            <label class="text-xs font-bold text-pink-400 block mb-2">Base URL (代理地址)</label>
+            <label class="text-xs font-bold text-lime-400 block mb-2">Base URL (代理地址)</label>
             <input type="text" id="base-url-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white font-mono" placeholder="https://generativelanguage.googleapis.com">
         </div>
 
         <div class="p-3 bg-red-900/20 border border-red-700/50 rounded">
             <label class="block text-xs font-bold text-red-400 mb-1">Eagle Token (必填)</label>
-            <p class="text-[10px] text-zinc-400 mb-2">Eagle > 偏好设置 > 开发者 > 开启 API > 复制 Token</p>
             <input type="text" id="eagle-token-input" class="w-full bg-black border border-red-700 rounded p-2 text-xs text-white font-mono" placeholder="粘贴 Token...">
             <button onclick="checkEagleStatus()" class="mt-2 w-full text-[10px] bg-red-800 text-white py-1 rounded">🔌 测试连接</button>
         </div>
 
         <div class="flex-1 flex flex-col min-h-[150px]">
             <div class="flex justify-between items-center mb-2">
-                <label class="block text-xs font-bold text-zinc-500">模型列表</label>
-                <button onclick="autoDiscoverModel()" class="text-[10px] text-pink-400 hover:text-pink-300">⚡ 重新扫描</button>
+                <label class="block text-xs font-bold text-zinc-500">模型列表 (自动 + 兜底)</label>
+                <button onclick="scanModels(false)" class="text-[10px] text-lime-400 hover:text-lime-300">⚡ 强制刷新</button>
             </div>
             <div id="model-list" class="flex-1 bg-zinc-900 border border-zinc-700 rounded overflow-y-auto"></div>
         </div>
         
         <div class="console-box" id="debug-log">Log initialized.</div>
 
-        <button onclick="saveSettings()" class="w-full py-3 bg-pink-600 hover:bg-pink-500 text-white rounded text-sm font-bold">保存并应用</button>
+        <button onclick="saveSettings()" class="w-full py-3 bg-lime-600 hover:bg-lime-500 text-white rounded text-sm font-bold">保存并应用</button>
     </div>
     <div id="settings-overlay" onclick="toggleSettings()" class="fixed inset-0 bg-black/50 z-40 hidden backdrop-blur-sm"></div>
 
@@ -180,6 +181,14 @@
         const DEFAULT_KEY = "AIzaSyB1mVPeECC27nWMhn49NBOT8_-PIJQmmEI";
         const EAGLE_API_URL = "http://127.0.0.1:41595";
         
+        // --- 核心：内置硬核模型列表 (兜底用) ---
+        const HARDCODED_MODELS = [
+            "gemini-1.5-flash",
+            "gemini-1.5-flash-latest",
+            "gemini-1.5-pro",
+            "gemini-1.5-pro-latest"
+        ];
+
         let CONFIG = {
             apiKey: "",
             baseUrl: "https://generativelanguage.googleapis.com", 
@@ -190,44 +199,84 @@
         let targetColorRGB = null;
 
         function init() {
-            if(localStorage.getItem('motiflow_v34')) {
-                const saved = JSON.parse(localStorage.getItem('motiflow_v34'));
+            if(localStorage.getItem('motiflow_v35')) {
+                const saved = JSON.parse(localStorage.getItem('motiflow_v35'));
                 if(saved.baseUrl) CONFIG.baseUrl = saved.baseUrl;
                 if(saved.endpoint) CONFIG.endpoint = saved.endpoint;
                 if(saved.eagleToken) CONFIG.eagleToken = saved.eagleToken;
-                // CONFIG.apiKey = saved.apiKey; 
             }
-            CONFIG.apiKey = DEFAULT_KEY; // 强制代码内Key
+            CONFIG.apiKey = DEFAULT_KEY; 
             
             document.getElementById('api-key-input').value = CONFIG.apiKey;
             document.getElementById('base-url-input').value = CONFIG.baseUrl;
             document.getElementById('eagle-token-input').value = CONFIG.eagleToken;
             
             checkEagleStatus();
-            if (!CONFIG.endpoint) autoDiscoverModel();
-            else { updateModelLabel(); scanModelList(true); }
+            
+            // 启动时尝试扫描，如果没 endpoint 则自动选
+            scanModels(true);
         }
 
-        // --- 1. 自动模型发现 ---
-        async function autoDiscoverModel() {
-            log("扫描可用模型...");
+        // --- 1. 扫描与兜底 (核心修复) ---
+        async function scanModels(silent = false) {
+            const list = document.getElementById('model-list');
+            if(!silent) list.innerHTML = '<div class="text-zinc-500 text-xs p-4">扫描中...</div>';
+            
+            let availableModels = [];
+
             try {
+                // 尝试网络请求
                 const url = `${CONFIG.baseUrl}/v1beta/models?key=${CONFIG.apiKey}`;
                 const res = await fetch(url);
-                const data = await res.json();
-                if (data.models) {
-                    const best = data.models.find(m => m.name.includes('flash')) || data.models[0];
-                    CONFIG.endpoint = `/v1beta/models/${best.name.replace('models/', '')}:generateContent`;
-                    log(`✅ 自动选中: ${best.name}`, 'suc');
-                    updateModelLabel();
-                    scanModelList(true);
-                    saveSettings(true);
+                if(res.ok) {
+                    const data = await res.json();
+                    if(data.models) {
+                        availableModels = data.models
+                            .map(m => m.name.replace('models/', ''))
+                            .filter(n => !n.includes('banana') && !n.includes('gemma')); // 简单过滤
+                    }
+                } else {
+                    throw new Error(res.status);
                 }
-            } catch(e) { log(`扫描失败: ${e.message}`, 'err'); }
+            } catch(e) {
+                if(!silent) log(`网络扫描失败 (${e.message})，加载内置列表`, 'err');
+                // 扫描失败，直接使用硬核列表
+                availableModels = HARDCODED_MODELS;
+            }
+
+            // 渲染列表
+            list.innerHTML = "";
+            availableModels.forEach(name => {
+                const div = document.createElement('div');
+                const isActive = CONFIG.endpoint.includes(name);
+                div.className = `model-item ${isActive ? 'active' : ''}`;
+                div.innerHTML = `<span>${name}</span>`;
+                div.onclick = () => {
+                    CONFIG.endpoint = `/v1beta/models/${name}:generateContent`;
+                    updateModelLabel();
+                    document.querySelectorAll('.model-item').forEach(e => e.classList.remove('active'));
+                    div.classList.add('active');
+                    saveSettings(true); // 选中即保存
+                };
+                list.appendChild(div);
+            });
+
+            // 如果当前没选模型，或者选的模型不在列表里，默认选第一个
+            if (!CONFIG.endpoint || (availableModels.length > 0 && !CONFIG.endpoint.includes(availableModels[0]))) {
+                if(availableModels.length > 0) {
+                    // 优先选 Flash
+                    const best = availableModels.find(m => m.includes('flash')) || availableModels[0];
+                    CONFIG.endpoint = `/v1beta/models/${best}:generateContent`;
+                    updateModelLabel();
+                    log(`自动选中: ${best}`, 'suc');
+                }
+            } else {
+                updateModelLabel();
+            }
         }
 
         function updateModelLabel() {
-            const name = CONFIG.endpoint.match(/models\/(.*?):/)?.[1] || "Unknown";
+            const name = CONFIG.endpoint.match(/models\/(.*?):/)?.[1] || "未选择";
             document.getElementById('current-model-name').innerText = name;
             document.getElementById('ai-status-dot').className = "w-2 h-2 rounded-full bg-green-500";
         }
@@ -250,7 +299,7 @@
 
         // --- 3. 核心上传 ---
         async function handleFiles(file) {
-            if(!CONFIG.endpoint) await autoDiscoverModel();
+            if(!CONFIG.endpoint) { alert("请先在设置中选择一个模型"); toggleSettings(); return; }
             
             const url = URL.createObjectURL(file);
             const img = document.getElementById('preview-thumb');
@@ -261,7 +310,7 @@
 
             document.getElementById('cn-keywords').placeholder = "Connecting...";
             document.getElementById('en-keywords').placeholder = "Connecting...";
-            document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-pink-500 animate-pulse text-xs">AI 识别中...</div>';
+            document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-lime-500 animate-pulse text-xs">AI 识别中...</div>';
 
             try {
                 const base64 = await toBase64(file);
@@ -294,7 +343,7 @@
             }
         }
 
-        // --- 4. Eagle 搜索 (强制 Blob 渲染) ---
+        // --- 4. Eagle 搜索 ---
         async function searchEagle(keyword) {
             if(!CONFIG.eagleToken) {
                 document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-red-500 text-xs">未设置 Token</div>';
@@ -311,7 +360,6 @@
                 
                 if(json.data && json.data.length > 0) {
                     let items = json.data;
-                    // 颜色排序
                     if (targetColorRGB) {
                         items.forEach(item => {
                             if (item.palettes && item.palettes.length > 0) {
@@ -322,11 +370,9 @@
                         items.sort((a, b) => a.colorDist - b.colorDist);
                     }
 
-                    // 渲染列表 (限制前18个)
                     const renderedItems = await Promise.all(items.slice(0, 18).map(async item => {
-                        // 核心黑科技: 强制 Fetch 图片数据转 Blob
                         const imgUrl = `${EAGLE_API_URL}/api/item/thumbnail?id=${item.id}&token=${CONFIG.eagleToken}`;
-                        let blobUrl = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMCAwaDI0djI0SDB6IiBmaWxsPSJub25lIi8+PC9zdmc+"; // 默认占位
+                        let blobUrl = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMCAwaDI0djI0SDB6IiBmaWxsPSJub25lIi8+PC9zdmc+";
                         
                         try {
                             const imgRes = await fetch(imgUrl);
@@ -334,10 +380,10 @@
                                 const blob = await imgRes.blob();
                                 blobUrl = URL.createObjectURL(blob);
                             }
-                        } catch(e) { console.warn("Img load fail", item.id); }
+                        } catch(e) { console.warn("Img fail", item.id); }
 
                         return `
-                        <div class="bg-zinc-900 rounded overflow-hidden cursor-pointer opacity-90 hover:opacity-100 transition border border-zinc-800 hover:border-pink-500 relative group" onclick="window.open('eagle://item/${item.id}')">
+                        <div class="bg-zinc-900 rounded overflow-hidden cursor-pointer opacity-90 hover:opacity-100 transition border border-zinc-800 hover:border-lime-500 relative group" onclick="window.open('eagle://item/${item.id}')">
                             <div class="aspect-square relative">
                                 <img src="${blobUrl}" class="eagle-img" onload="this.classList.add('loaded')">
                             </div>
@@ -390,7 +436,7 @@
         function saveSettings(silent) {
             CONFIG.baseUrl = document.getElementById('base-url-input').value.trim().replace(/\/$/, "");
             CONFIG.eagleToken = document.getElementById('eagle-token-input').value.trim();
-            localStorage.setItem('motiflow_v34', JSON.stringify(CONFIG));
+            localStorage.setItem('motiflow_v35', JSON.stringify(CONFIG));
             if(!silent) { alert("保存成功"); toggleSettings(); }
             checkEagleStatus();
         }
@@ -401,30 +447,11 @@
             document.getElementById('upload-hint').classList.remove('hidden');
             document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-zinc-700 text-xs">等待上传...</div>';
         }
-        async function scanModelList(silent=false) {
-             const list = document.getElementById('model-list');
-             try {
-                 const res = await fetch(`${CONFIG.baseUrl}/v1beta/models?key=${CONFIG.apiKey}`);
-                 const data = await res.json();
-                 list.innerHTML = "";
-                 data.models.forEach(m => {
-                     if(m.supportedGenerationMethods?.includes('generateContent') && !m.name.includes('banana')) {
-                         const name = m.name.replace('models/','');
-                         const div = document.createElement('div');
-                         div.className = `model-item ${CONFIG.endpoint.includes(name)?'active':''}`;
-                         div.innerHTML = `<span>${name}</span>`;
-                         div.onclick = () => { CONFIG.endpoint = `/v1beta/models/${name}:generateContent`; saveSettings(); };
-                         list.appendChild(div);
-                     }
-                 });
-             } catch(e){}
-        }
         function toBase64(file) { return new Promise((r) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => r(reader.result); }); }
         
         const dropArea = document.getElementById('drop-area');
         const fileInput = document.getElementById('file-input');
         function triggerUpload() { if(!document.getElementById('preview-thumb').src) fileInput.click(); }
-        // 点击预览图本身不触发上传
         document.getElementById('preview-thumb').addEventListener('click', (e) => e.stopPropagation());
 
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => dropArea.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); }));
