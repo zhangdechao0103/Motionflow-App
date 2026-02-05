@@ -3,29 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer">
-    <title>Motiflow VFX - 智能中控台 v21</title>
+    <title>Motiflow VFX - v22 Flux</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #050505; color: #e0e0e0; }
-        .glass { background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
         
-        /* 传送门卡片特效 */
-        .portal-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #333; position: relative; overflow: hidden; }
+        /* 卡片特效 */
+        .portal-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #222; position: relative; overflow: hidden; }
         .portal-card:hover { transform: translateY(-5px); border-color: var(--accent-color); box-shadow: 0 10px 30px -10px var(--shadow-color); }
-        .portal-card::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent); transition: 0.5s; }
-        .portal-card:hover::before { left: 100%; }
-
+        
+        /* 侧边栏 */
         .settings-panel { transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .settings-panel.open { transform: translateX(0); }
         
         /* 模型列表 */
-        .model-item { cursor: pointer; padding: 10px; border-bottom: 1px solid #222; font-size: 11px; color: #888; }
+        .model-item { cursor: pointer; padding: 10px; border-bottom: 1px solid #222; font-size: 11px; color: #666; display: flex; justify-content: space-between; align-items: center; }
         .model-item:hover { background: #111; color: white; }
         .model-item.active { background: #1e3a8a; color: #93c5fd; border-left: 3px solid #3b82f6; }
+        .tag-rec { background: #064e3b; color: #34d399; padding: 2px 6px; border-radius: 4px; font-size: 9px; }
 
-        /* 终端日志 */
-        .console-box { font-family: 'Consolas', monospace; font-size: 10px; background: #000; padding: 10px; height: 100px; overflow-y: auto; color: #666; }
+        /* 动画 */
+        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
+        .upload-active { animation: pulse-ring 2s infinite; border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
     </style>
 </head>
 <body class="min-h-screen bg-[#050505] flex flex-col overflow-x-hidden">
@@ -33,225 +33,232 @@
     <nav class="sticky top-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-md border-b border-white/5">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded flex items-center justify-center font-bold text-white">21</div>
-                <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-blue-500 font-normal">| HUB</span></span>
+                <div class="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center font-bold text-white">22</div>
+                <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-indigo-500 font-normal">| FLUX</span></span>
             </div>
-            <button onclick="toggleSettings()" class="text-zinc-400 hover:text-white text-xs flex items-center gap-2 px-3 py-1 rounded border border-zinc-800 hover:bg-zinc-800 transition">
-                <i class="fas fa-cog"></i> 设置与模型
-            </button>
+            
+            <div class="flex items-center gap-4">
+                <div class="hidden md:flex items-center gap-2 text-[10px] text-zinc-500 bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">
+                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                    当前模型: <span id="current-model-label" class="text-zinc-300 font-mono">Loading...</span>
+                </div>
+
+                <button onclick="toggleSettings()" class="text-zinc-400 hover:text-white text-xs px-3 py-1 rounded border border-zinc-800 hover:bg-zinc-800 transition">
+                    <i class="fas fa-cog"></i> 设置
+                </button>
+            </div>
         </div>
     </nav>
 
     <main class="flex-1 max-w-7xl mx-auto w-full p-6 flex flex-col gap-8">
         
-        <section class="flex flex-col md:flex-row gap-6 items-stretch h-48">
-            <div class="relative group w-full md:w-1/3 border-2 border-dashed border-zinc-800 rounded-2xl hover:border-blue-500 transition cursor-pointer flex flex-col items-center justify-center bg-zinc-900/20" onclick="document.getElementById('file-input').click()">
+        <section class="flex flex-col md:flex-row gap-6 items-stretch h-auto md:h-48">
+            <div id="drop-area" class="relative group w-full md:w-1/3 border-2 border-dashed border-zinc-800 rounded-2xl hover:border-indigo-500 transition cursor-pointer flex flex-col items-center justify-center bg-zinc-900/20 py-8 md:py-0" onclick="triggerUpload()">
                 <input type="file" id="file-input" class="hidden" accept="image/*">
-                <i class="fas fa-cloud-upload-alt text-4xl mb-3 text-zinc-600 group-hover:text-blue-500 transition"></i>
-                <p class="text-xs text-zinc-500 font-bold group-hover:text-zinc-300">点击上传参考图</p>
-                <p class="text-[10px] text-zinc-600 mt-1">AI 将自动生成多平台搜索词</p>
+                <i class="fas fa-cloud-upload-alt text-4xl mb-3 text-zinc-600 group-hover:text-indigo-500 transition"></i>
+                <p class="text-xs text-zinc-500 font-bold group-hover:text-zinc-300">点击 / 拖拽图片</p>
+                <p class="text-[10px] text-zinc-600 mt-1">无需刷新，随时重传</p>
             </div>
 
-            <div class="w-full md:w-2/3 bg-black border border-zinc-800 rounded-2xl p-4 flex flex-col relative overflow-hidden">
-                <div class="flex justify-between items-center mb-2 border-b border-zinc-800 pb-2">
-                    <span class="text-xs font-bold text-blue-400"><i class="fas fa-robot"></i> AI ANALYSIS</span>
-                    <span id="status-text" class="text-[10px] text-zinc-500">Waiting...</span>
+            <div class="w-full md:w-2/3 bg-black border border-zinc-800 rounded-2xl p-4 flex flex-col relative">
+                <div class="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
+                    <span class="text-xs font-bold text-indigo-400"><i class="fas fa-microchip"></i> AI ANALYSIS HUB</span>
+                    <button onclick="resetAll()" class="text-[10px] text-zinc-500 hover:text-white flex items-center gap-1 bg-zinc-900 px-2 py-1 rounded">
+                        <i class="fas fa-redo"></i> 重置
+                    </button>
                 </div>
-                <div class="flex-1 flex flex-col justify-center gap-3">
+                <div class="flex-1 flex flex-col justify-center gap-4">
                     <div class="flex items-center gap-3">
-                        <span class="text-[10px] text-zinc-500 w-12 text-right">CN KEY:</span>
-                        <input type="text" id="cn-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-white focus:border-blue-500 outline-none" placeholder="等待生成中文关键词...">
+                        <span class="text-[10px] text-zinc-500 w-16 text-right font-bold">CN (花瓣)</span>
+                        <input type="text" id="cn-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-indigo-500 outline-none transition" placeholder="等待分析...">
+                        <button onclick="copyText('cn-keywords')" class="text-zinc-600 hover:text-white"><i class="far fa-copy"></i></button>
                     </div>
                     <div class="flex items-center gap-3">
-                        <span class="text-[10px] text-zinc-500 w-12 text-right">EN KEY:</span>
-                        <input type="text" id="en-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-xs text-white focus:border-purple-500 outline-none" placeholder="Waiting for English keywords...">
+                        <span class="text-[10px] text-zinc-500 w-16 text-right font-bold">EN (专业)</span>
+                        <input type="text" id="en-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-indigo-500 outline-none transition" placeholder="Waiting for analysis...">
+                        <button onclick="copyText('en-keywords')" class="text-zinc-600 hover:text-white"><i class="far fa-copy"></i></button>
                     </div>
                 </div>
-                <button onclick="refreshLinks()" class="absolute bottom-4 right-4 bg-zinc-800 hover:bg-zinc-700 text-white text-xs px-3 py-1 rounded border border-zinc-700 transition">
-                    <i class="fas fa-sync-alt"></i> 更新链接
-                </button>
+                <div class="mt-4 flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="show-preview" class="accent-indigo-500" checked onchange="togglePreviewArea()">
+                        <label for="show-preview" class="text-[10px] text-zinc-500 cursor-pointer select-none">显示 Tenor 预览 (质量较低)</label>
+                    </div>
+                    <button onclick="refreshLinks()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-4 py-2 rounded font-bold shadow-lg shadow-indigo-900/50 transition">
+                        <i class="fas fa-bolt"></i> 执行搜索
+                    </button>
+                </div>
             </div>
         </section>
 
         <section>
-            <h2 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
-                <i class="fas fa-external-link-alt text-blue-500"></i> 专业资源直达 (Professional Sources)
-            </h2>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                
-                <a id="link-huaban" target="_blank" class="portal-card bg-[#c8222c]/10 rounded-xl p-5 flex flex-col gap-2 group cursor-pointer" style="--accent-color: #c8222c; --shadow-color: rgba(200, 34, 44, 0.4);">
-                    <div class="flex justify-between items-start">
-                        <i class="fas fa-flower text-2xl text-[#c8222c]"></i>
-                        <i class="fas fa-arrow-right opacity-0 group-hover:opacity-100 text-[#c8222c] transition transform -translate-x-2 group-hover:translate-x-0"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-white">花瓣网</h3>
-                        <p class="text-[10px] text-zinc-400">国内最全参考库</p>
-                    </div>
-                    <div class="mt-auto pt-2 border-t border-white/10 text-[10px] text-[#c8222c] truncate" id="text-huaban">等待 AI...</div>
+                <a id="link-huaban" target="_blank" class="portal-card bg-[#c8222c]/10 rounded-xl p-4 flex flex-col gap-2 group cursor-pointer" style="--accent-color: #c8222c; --shadow-color: rgba(200, 34, 44, 0.4);">
+                    <div class="flex justify-between"><i class="fas fa-flower text-xl text-[#c8222c]"></i><i class="fas fa-external-link-alt text-[#c8222c] opacity-50"></i></div>
+                    <div><h3 class="font-bold text-white text-sm">花瓣网</h3><p class="text-[10px] text-zinc-400">中文灵感库</p></div>
                 </a>
-
-                <a id="link-pinterest" target="_blank" class="portal-card bg-[#bd081c]/10 rounded-xl p-5 flex flex-col gap-2 group cursor-pointer" style="--accent-color: #bd081c; --shadow-color: rgba(189, 8, 28, 0.4);">
-                    <div class="flex justify-between items-start">
-                        <i class="fab fa-pinterest text-2xl text-[#bd081c]"></i>
-                        <i class="fas fa-arrow-right opacity-0 group-hover:opacity-100 text-[#bd081c] transition transform -translate-x-2 group-hover:translate-x-0"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-white">Pinterest</h3>
-                        <p class="text-[10px] text-zinc-400">全球灵感瀑布流</p>
-                    </div>
-                    <div class="mt-auto pt-2 border-t border-white/10 text-[10px] text-[#bd081c] truncate" id="text-pinterest">Waiting AI...</div>
+                <a id="link-pinterest" target="_blank" class="portal-card bg-[#bd081c]/10 rounded-xl p-4 flex flex-col gap-2 group cursor-pointer" style="--accent-color: #bd081c; --shadow-color: rgba(189, 8, 28, 0.4);">
+                    <div class="flex justify-between"><i class="fab fa-pinterest text-xl text-[#bd081c]"></i><i class="fas fa-external-link-alt text-[#bd081c] opacity-50"></i></div>
+                    <div><h3 class="font-bold text-white text-sm">Pinterest</h3><p class="text-[10px] text-zinc-400">全球参考</p></div>
                 </a>
-
-                <a id="link-artstation" target="_blank" class="portal-card bg-[#13aff0]/10 rounded-xl p-5 flex flex-col gap-2 group cursor-pointer" style="--accent-color: #13aff0; --shadow-color: rgba(19, 175, 240, 0.4);">
-                    <div class="flex justify-between items-start">
-                        <i class="fab fa-artstation text-2xl text-[#13aff0]"></i>
-                        <i class="fas fa-arrow-right opacity-0 group-hover:opacity-100 text-[#13aff0] transition transform -translate-x-2 group-hover:translate-x-0"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-white">ArtStation</h3>
-                        <p class="text-[10px] text-zinc-400">硬核游戏美术</p>
-                    </div>
-                    <div class="mt-auto pt-2 border-t border-white/10 text-[10px] text-[#13aff0] truncate" id="text-artstation">Waiting AI...</div>
+                <a id="link-artstation" target="_blank" class="portal-card bg-[#13aff0]/10 rounded-xl p-4 flex flex-col gap-2 group cursor-pointer" style="--accent-color: #13aff0; --shadow-color: rgba(19, 175, 240, 0.4);">
+                    <div class="flex justify-between"><i class="fab fa-artstation text-xl text-[#13aff0]"></i><i class="fas fa-external-link-alt text-[#13aff0] opacity-50"></i></div>
+                    <div><h3 class="font-bold text-white text-sm">ArtStation</h3><p class="text-[10px] text-zinc-400">专业美术</p></div>
                 </a>
-
-                <a id="link-bilibili" target="_blank" class="portal-card bg-[#00aeec]/10 rounded-xl p-5 flex flex-col gap-2 group cursor-pointer" style="--accent-color: #00aeec; --shadow-color: rgba(0, 174, 236, 0.4);">
-                    <div class="flex justify-between items-start">
-                        <i class="fab fa-bilibili text-2xl text-[#00aeec]"></i>
-                        <i class="fas fa-arrow-right opacity-0 group-hover:opacity-100 text-[#00aeec] transition transform -translate-x-2 group-hover:translate-x-0"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-white">Bilibili</h3>
-                        <p class="text-[10px] text-zinc-400">实操教程与拆解</p>
-                    </div>
-                    <div class="mt-auto pt-2 border-t border-white/10 text-[10px] text-[#00aeec] truncate" id="text-bilibili">等待 AI...</div>
+                <a id="link-bilibili" target="_blank" class="portal-card bg-[#00aeec]/10 rounded-xl p-4 flex flex-col gap-2 group cursor-pointer" style="--accent-color: #00aeec; --shadow-color: rgba(0, 174, 236, 0.4);">
+                    <div class="flex justify-between"><i class="fab fa-bilibili text-xl text-[#00aeec]"></i><i class="fas fa-external-link-alt text-[#00aeec] opacity-50"></i></div>
+                    <div><h3 class="font-bold text-white text-sm">Bilibili</h3><p class="text-[10px] text-zinc-400">视频教程</p></div>
                 </a>
-
             </div>
         </section>
 
-        <section class="opacity-60 hover:opacity-100 transition duration-500">
-            <h2 class="text-sm font-bold text-zinc-500 mb-4 flex items-center gap-2">
-                <i class="fas fa-film"></i> 快速预览 (Quick Preview via Tenor)
+        <section id="preview-section" class="border-t border-zinc-900 pt-6 transition-all duration-300">
+            <h2 class="text-xs font-bold text-zinc-500 mb-4 flex items-center gap-2">
+                <i class="fas fa-images"></i> 快速预览 (Tenor)
+                <span class="text-[9px] bg-zinc-900 px-2 py-0.5 rounded text-zinc-600">仅供参考</span>
             </h2>
-            <div id="results-grid" class="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-6 gap-4">
+            <div id="results-grid" class="grid grid-cols-2 md:grid-cols-6 gap-3 min-h-[100px]">
+                <div class="col-span-full text-center py-10 text-zinc-700 text-xs">
+                    等待图片上传...
                 </div>
+            </div>
         </section>
 
     </main>
 
     <div id="settings-panel" class="settings-panel fixed top-0 right-0 h-full w-[400px] bg-[#0d0d0d] border-l border-zinc-800 z-50 p-6 shadow-2xl flex flex-col gap-4">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="font-bold text-white">⚙️ 设置</h2>
+        <div class="flex justify-between items-center">
+            <h2 class="font-bold text-white">⚙️ 全局设置</h2>
             <button onclick="toggleSettings()" class="text-zinc-500 hover:text-white">✕</button>
         </div>
         
         <div>
             <label class="block text-xs font-bold text-zinc-500 mb-1">API Key</label>
-            <input type="text" id="api-key-input" class="w-full bg-zinc-900 border border-zinc-700 rounded p-2 text-xs text-white">
+            <input type="text" id="api-key-input" class="w-full bg-zinc-900 border border-zinc-700 rounded p-2 text-xs text-white font-mono">
         </div>
 
         <div class="flex-1 flex flex-col min-h-0">
             <div class="flex justify-between items-center mb-2">
-                <label class="block text-xs font-bold text-zinc-500">可用模型</label>
-                <button onclick="scanModels()" class="text-[10px] text-blue-400 hover:text-blue-300">刷新列表</button>
+                <label class="block text-xs font-bold text-zinc-500">模型列表 (自动记忆)</label>
+                <button onclick="scanModels()" class="text-[10px] text-indigo-400 hover:text-indigo-300">刷新</button>
             </div>
             <div id="model-list" class="flex-1 bg-zinc-900 border border-zinc-700 rounded overflow-y-auto"></div>
         </div>
 
-        <button onclick="saveSettings()" class="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm font-bold">保存</button>
-        <div class="console-box" id="debug-log">Log initialized.</div>
+        <button onclick="saveSettings()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-sm font-bold">保存并应用</button>
     </div>
     <div id="settings-overlay" onclick="toggleSettings()" class="fixed inset-0 bg-black/50 z-40 hidden backdrop-blur-sm"></div>
 
     <script>
-        // 配置 - 已更新你的 Key
+        // 你的 Key
+        const MY_KEY = "AIzaSyAnz-ZEKHHB34IJIRM31m6p4gq8y9es0tM";
+        const TENOR_KEY = "LIVDSRZULELA";
+        
         let CONFIG = {
-            apiKey: "AIzaSyAnz-ZEKHHB34IJIRM31m6p4gq8y9es0tM", 
+            apiKey: MY_KEY,
+            // 默认 endpoint，如果没有缓存会用这个
             endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
         };
-        const TENOR_KEY = "LIVDSRZULELA";
 
-        // DOM
-        const cnInput = document.getElementById('cn-keywords');
-        const enInput = document.getElementById('en-keywords');
-        const statusText = document.getElementById('status-text');
-        
-        if(localStorage.getItem('motiflow_v21')) CONFIG = JSON.parse(localStorage.getItem('motiflow_v21'));
-        
-        // 强制使用代码中更新的 Key，防止旧缓存覆盖
-        CONFIG.apiKey = "AIzaSyAnz-ZEKHHB34IJIRM31m6p4gq8y9es0tM"; 
-        document.getElementById('api-key-input').value = CONFIG.apiKey;
-
-        function log(msg) {
-            const box = document.getElementById('debug-log');
-            box.innerText += `\n> ${msg}`;
-            box.scrollTop = box.scrollHeight;
+        // --- 1. 初始化 (自动记忆) ---
+        function init() {
+            // 读取缓存
+            if(localStorage.getItem('motiflow_v22')) {
+                const saved = JSON.parse(localStorage.getItem('motiflow_v22'));
+                // 仅读取 endpoint，Key 强制使用代码里的（防止缓存了旧 Key）
+                if(saved.endpoint) CONFIG.endpoint = saved.endpoint;
+            }
+            
+            // UI 更新
+            document.getElementById('api-key-input').value = CONFIG.apiKey;
+            updateModelLabel();
+            
+            // 自动加载模型列表（静默加载，不弹窗）
+            scanModels(true);
         }
 
+        function updateModelLabel() {
+            // 从 endpoint 中提取模型名
+            const name = CONFIG.endpoint.match(/models\/(.*?):/)?.[1] || "Unknown";
+            document.getElementById('current-model-label').innerText = name;
+        }
+
+        // --- 2. 设置与模型 ---
         function toggleSettings() {
             document.getElementById('settings-panel').classList.toggle('open');
             document.getElementById('settings-overlay').classList.toggle('hidden');
         }
 
-        // 核心：扫描模型
-        async function scanModels() {
-            const key = document.getElementById('api-key-input').value.trim();
-            log("Scanning...");
+        async function scanModels(silent = false) {
+            const list = document.getElementById('model-list');
+            if(!silent) list.innerHTML = '<div class="text-zinc-500 text-xs p-4">Scanning...</div>';
+
             try {
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${CONFIG.apiKey}`);
                 const data = await res.json();
-                const list = document.getElementById('model-list');
                 list.innerHTML = "";
                 
-                // 推荐列表
-                const recommended = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro-vision'];
+                const recommended = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-latest'];
 
                 data.models.forEach(m => {
-                    const name = m.name.replace('models/', '');
                     if(m.supportedGenerationMethods?.includes('generateContent')) {
+                        const name = m.name.replace('models/', '');
                         const div = document.createElement('div');
-                        div.className = `model-item ${CONFIG.endpoint.includes(name) ? 'active' : ''}`;
-                        div.innerText = name;
-                        if(recommended.includes(name)) div.style.color = "#34d399"; // 绿色高亮推荐
                         
+                        // 判断是否是当前选中的模型
+                        const isActive = CONFIG.endpoint.includes(name);
+                        
+                        div.className = `model-item ${isActive ? 'active' : ''}`;
+                        let html = `<span>${name}</span>`;
+                        if(recommended.includes(name)) html += `<span class="tag-rec">推荐</span>`;
+                        
+                        div.innerHTML = html;
                         div.onclick = () => {
                             CONFIG.endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${name}:generateContent`;
+                            // 更新 UI
                             document.querySelectorAll('.model-item').forEach(e => e.classList.remove('active'));
                             div.classList.add('active');
-                            log(`Selected: ${name}`);
+                            updateModelLabel();
                         };
                         list.appendChild(div);
                     }
                 });
-            } catch(e) { log("Scan Error: " + e.message); }
+            } catch(e) { 
+                if(!silent) list.innerHTML = `<div class="text-red-500 text-xs p-4">Error: ${e.message}</div>`;
+            }
         }
 
         function saveSettings() {
             CONFIG.apiKey = document.getElementById('api-key-input').value.trim();
-            localStorage.setItem('motiflow_v21', JSON.stringify(CONFIG));
-            alert("Saved!");
+            localStorage.setItem('motiflow_v22', JSON.stringify(CONFIG));
+            alert("设置已保存 (下次自动加载)");
             toggleSettings();
         }
 
-        // 核心：上传处理
-        document.getElementById('file-input').addEventListener('change', async (e) => {
+        // --- 3. 上传逻辑 (免刷新) ---
+        function triggerUpload() {
+            document.getElementById('file-input').click();
+        }
+
+        // 绑定文件变化事件
+        document.getElementById('file-input').addEventListener('change', async function(e) {
             const file = e.target.files[0];
             if(!file) return;
 
-            statusText.innerText = "Thinking...";
-            statusText.className = "text-xs text-blue-400 animate-pulse";
-            log("New upload...");
+            // UI 状态重置
+            document.getElementById('drop-area').classList.add('upload-active');
+            document.getElementById('cn-keywords').placeholder = "AI 分析中...";
+            document.getElementById('en-keywords').placeholder = "Analyzing...";
+            document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-indigo-500 animate-pulse text-xs">AI 正在思考...</div>';
 
             try {
                 const base64 = await toBase64(file);
                 
-                // Prompt：要求返回 JSON 格式，包含中文和英文两组词
                 const prompt = `
-                    Analyze this Game VFX. Return a JSON object with two fields:
-                    "cn": A Chinese search query for Huaban (e.g., "Unity 刀光特效", "二次元 爆炸", "赛博朋克 UI").
-                    "en": An English search query for ArtStation/Pinterest (e.g., "Unity Slash VFX Reference", "Stylized Explosion", "Sci-Fi HUD Interface").
-                    Do not use markdown. Just raw JSON.
+                    Analyze this Game VFX. Return a JSON object with:
+                    "cn": Chinese keywords for Huaban (e.g., "Unity 刀光特效").
+                    "en": English keywords for ArtStation (e.g., "Unity Slash VFX").
+                    "tenor": A specific English keyword for GIF search (add "gameplay" or "unity" to filter memes).
                 `;
 
                 const res = await fetch(`${CONFIG.endpoint}?key=${CONFIG.apiKey}`, {
@@ -266,81 +273,95 @@
                 });
 
                 const raw = await res.text();
-                const data = JSON.parse(raw);
-                const text = data.candidates[0].content.parts[0].text;
-                
-                // 清洗 JSON (防止 AI 加 Markdown 代码块)
-                const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                // 简单清洗 JSON
+                const jsonStr = raw.replace(/```json/g, '').replace(/```/g, '').trim();
                 const result = JSON.parse(jsonStr);
 
-                // 填入输入框
-                cnInput.value = result.cn;
-                enInput.value = result.en;
+                // 填入数据
+                document.getElementById('cn-keywords').value = result.cn;
+                document.getElementById('en-keywords').value = result.en;
                 
-                statusText.innerText = "Ready";
-                statusText.className = "text-xs text-green-500";
-                
-                // 刷新所有链接
-                refreshLinks();
+                // 自动刷新链接
+                refreshLinks(result.tenor || result.en);
 
             } catch(e) {
-                console.error(e);
-                statusText.innerText = "Error";
-                statusText.className = "text-xs text-red-500";
-                log("Error: " + e.message);
-                
-                // 降级：如果 JSON 解析失败，尝试用正则提取或者提示手动输入
-                cnInput.value = "识别失败，请手动输入";
-                enInput.value = "Error";
+                alert("AI 分析失败: " + e.message + "\n请检查网络或 Key。");
+                document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-red-500 text-xs">分析失败</div>';
+            } finally {
+                // 清理状态，允许重复上传
+                document.getElementById('drop-area').classList.remove('upload-active');
+                this.value = ''; // 关键：清空 input value，否则选同一张图不会触发 change
             }
         });
 
-        // 刷新所有外部链接
-        function refreshLinks() {
-            const cn = cnInput.value.trim() || "游戏特效";
-            const en = enInput.value.trim() || "Game VFX";
+        // --- 4. 功能逻辑 ---
+        function resetAll() {
+            document.getElementById('cn-keywords').value = "";
+            document.getElementById('en-keywords').value = "";
+            document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-zinc-700 text-xs">等待图片上传...</div>';
+            document.getElementById('drop-area').classList.remove('upload-active');
+        }
 
-            // 1. 花瓣 (中文)
+        function refreshLinks(tenorQueryOverride) {
+            const cn = document.getElementById('cn-keywords').value.trim() || "游戏特效";
+            const en = document.getElementById('en-keywords').value.trim() || "Game VFX";
+
+            // 更新外部链接
             document.getElementById('link-huaban').href = `https://huaban.com/search/?q=${encodeURIComponent(cn)}`;
-            document.getElementById('text-huaban').innerText = `搜: ${cn}`;
-
-            // 2. Bilibili (中文)
-            document.getElementById('link-bilibili').href = `https://search.bilibili.com/all?keyword=${encodeURIComponent(cn + " 教程")}`;
-            document.getElementById('text-bilibili').innerText = `搜: ${cn} 教程`;
-
-            // 3. Pinterest (英文)
             document.getElementById('link-pinterest').href = `https://www.pinterest.com/search/pins/?q=${encodeURIComponent(en)}`;
-            document.getElementById('text-pinterest').innerText = `Search: ${en}`;
-
-            // 4. ArtStation (英文)
             document.getElementById('link-artstation').href = `https://www.artstation.com/search?sort_by=relevance&query=${encodeURIComponent(en)}`;
-            document.getElementById('text-artstation').innerText = `Search: ${en}`;
+            document.getElementById('link-bilibili').href = `https://search.bilibili.com/all?keyword=${encodeURIComponent(cn + " 教程")}`;
 
-            // 5. Tenor (英文 + 过滤)
-            searchTenor(en);
+            // Tenor 搜索 (带优化后缀)
+            const showTenor = document.getElementById('show-preview').checked;
+            if (showTenor) {
+                // 如果 AI 没给专门的 tenor 词，就用英文词 + 硬核后缀
+                const query = tenorQueryOverride || en;
+                const refinedQuery = query + " unity ue5 gameplay -meme -cartoon"; 
+                searchTenor(refinedQuery);
+            } else {
+                document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-zinc-700 text-xs">预览已隐藏</div>';
+            }
         }
 
         async function searchTenor(query) {
             const grid = document.getElementById('results-grid');
-            grid.innerHTML = '<div class="text-zinc-600 text-xs p-4">Loading preview...</div>';
+            grid.innerHTML = '<div class="col-span-full text-center py-10 text-zinc-500 text-xs">正在搜索预览...</div>';
             
             try {
-                const cleanQuery = query.replace(/[^\w\s]/gi, '') + " gameplay vfx -meme";
-                const res = await fetch(`https://g.tenor.com/v1/search?q=${encodeURIComponent(cleanQuery)}&key=${TENOR_KEY}&limit=10&media_filter=minimal`);
+                const res = await fetch(`https://g.tenor.com/v1/search?q=${encodeURIComponent(query)}&key=${TENOR_KEY}&limit=12&media_filter=minimal`);
                 const data = await res.json();
                 
-                if(data.results.length) {
+                if(data.results && data.results.length) {
                     grid.innerHTML = data.results.map(item => `
-                        <div class="aspect-square bg-zinc-900 rounded overflow-hidden cursor-pointer opacity-80 hover:opacity-100 transition" onclick="window.open('${item.itemurl}', '_blank')">
-                            <img src="${item.media[0].tinygif.url}" class="w-full h-full object-cover">
+                        <div class="aspect-square bg-zinc-900 rounded overflow-hidden cursor-pointer opacity-80 hover:opacity-100 transition border border-zinc-800 hover:border-indigo-500" onclick="window.open('${item.itemurl}', '_blank')">
+                            <img src="${item.media[0].tinygif.url}" class="w-full h-full object-cover" loading="lazy">
                         </div>
                     `).join('');
                 } else {
-                    grid.innerHTML = '<div class="text-zinc-600 text-xs p-4">No preview available.</div>';
+                    grid.innerHTML = '<div class="col-span-full text-center py-10 text-zinc-600 text-xs">Tenor 暂无相关素材 (建议使用上方专业传送门)</div>';
                 }
             } catch(e) {
-                grid.innerHTML = '<div class="text-zinc-600 text-xs p-4">Preview offline.</div>';
+                grid.innerHTML = '<div class="col-span-full text-center py-10 text-zinc-600 text-xs">预览加载失败</div>';
             }
+        }
+
+        function togglePreviewArea() {
+            const section = document.getElementById('preview-section');
+            const show = document.getElementById('show-preview').checked;
+            if(show) {
+                section.classList.remove('opacity-30', 'pointer-events-none');
+                refreshLinks(); // 重新触发搜索
+            } else {
+                section.classList.add('opacity-30', 'pointer-events-none');
+            }
+        }
+
+        function copyText(id) {
+            const el = document.getElementById(id);
+            el.select();
+            document.execCommand('copy');
+            alert("已复制: " + el.value);
         }
 
         function toBase64(file) {
@@ -350,6 +371,10 @@
                 reader.onload = () => resolve(reader.result);
             });
         }
+
+        // 启动
+        init();
+
     </script>
 </body>
 </html>
