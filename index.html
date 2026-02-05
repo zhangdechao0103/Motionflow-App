@@ -8,6 +8,7 @@
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #050505; color: #e0e0e0; }
         .glass { background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .search-input:focus { box-shadow: 0 0 20px rgba(0, 229, 255, 0.3); border-color: #00e5ff; }
         .vfx-card { transition: all 0.2s; border: 1px solid #222; }
         .vfx-card:hover { transform: translateY(-4px); border-color: #00e5ff; z-index: 10; }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 100; opacity: 0; transition: opacity 0.2s; }
@@ -356,7 +357,8 @@
         function closeModal() { document.getElementById('preview-modal').classList.remove('active'); }
         async function saveToEagle() {
             try {
-                await fetch("http://localhost:44324/api/item/addFromURL", { method: 'POST', body: JSON.stringify({ url: document.getElementById('modal-img').src, name: "VFX_"+Date.now() }) });
+                const url = document.getElementById('modal-img').src;
+                await fetch("http://localhost:44324/api/item/addFromURL", { method: 'POST', body: JSON.stringify({ url: url, name: "VFX_"+Date.now() }) });
                 alert("✅ Saved!");
             } catch (e) { alert("⚠️ Eagle 未启动"); }
         }
