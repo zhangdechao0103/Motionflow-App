@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer">
-    <title>Motiflow VFX - v22 Flux</title>
+    <title>Motiflow VFX - v23 Key Fix</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -33,16 +33,15 @@
     <nav class="sticky top-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-md border-b border-white/5">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center font-bold text-white">22</div>
-                <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-indigo-500 font-normal">| FLUX</span></span>
+                <div class="w-8 h-8 bg-red-600 rounded flex items-center justify-center font-bold text-white">23</div>
+                <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-red-500 font-normal">| KEY FIX</span></span>
             </div>
             
             <div class="flex items-center gap-4">
                 <div class="hidden md:flex items-center gap-2 text-[10px] text-zinc-500 bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">
                     <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                    当前模型: <span id="current-model-label" class="text-zinc-300 font-mono">Loading...</span>
+                    使用模型: <span id="current-model-label" class="text-zinc-300 font-mono">...</span>
                 </div>
-
                 <button onclick="toggleSettings()" class="text-zinc-400 hover:text-white text-xs px-3 py-1 rounded border border-zinc-800 hover:bg-zinc-800 transition">
                     <i class="fas fa-cog"></i> 设置
                 </button>
@@ -53,16 +52,16 @@
     <main class="flex-1 max-w-7xl mx-auto w-full p-6 flex flex-col gap-8">
         
         <section class="flex flex-col md:flex-row gap-6 items-stretch h-auto md:h-48">
-            <div id="drop-area" class="relative group w-full md:w-1/3 border-2 border-dashed border-zinc-800 rounded-2xl hover:border-indigo-500 transition cursor-pointer flex flex-col items-center justify-center bg-zinc-900/20 py-8 md:py-0" onclick="triggerUpload()">
+            <div id="drop-area" class="relative group w-full md:w-1/3 border-2 border-dashed border-zinc-800 rounded-2xl hover:border-red-500 transition cursor-pointer flex flex-col items-center justify-center bg-zinc-900/20 py-8 md:py-0" onclick="triggerUpload()">
                 <input type="file" id="file-input" class="hidden" accept="image/*">
-                <i class="fas fa-cloud-upload-alt text-4xl mb-3 text-zinc-600 group-hover:text-indigo-500 transition"></i>
+                <i class="fas fa-cloud-upload-alt text-4xl mb-3 text-zinc-600 group-hover:text-red-500 transition"></i>
                 <p class="text-xs text-zinc-500 font-bold group-hover:text-zinc-300">点击 / 拖拽图片</p>
-                <p class="text-[10px] text-zinc-600 mt-1">无需刷新，随时重传</p>
+                <p class="text-[10px] text-zinc-600 mt-1">新 Key 已激活</p>
             </div>
 
             <div class="w-full md:w-2/3 bg-black border border-zinc-800 rounded-2xl p-4 flex flex-col relative">
                 <div class="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
-                    <span class="text-xs font-bold text-indigo-400"><i class="fas fa-microchip"></i> AI ANALYSIS HUB</span>
+                    <span class="text-xs font-bold text-red-400"><i class="fas fa-microchip"></i> AI ANALYSIS HUB</span>
                     <button onclick="resetAll()" class="text-[10px] text-zinc-500 hover:text-white flex items-center gap-1 bg-zinc-900 px-2 py-1 rounded">
                         <i class="fas fa-redo"></i> 重置
                     </button>
@@ -70,21 +69,19 @@
                 <div class="flex-1 flex flex-col justify-center gap-4">
                     <div class="flex items-center gap-3">
                         <span class="text-[10px] text-zinc-500 w-16 text-right font-bold">CN (花瓣)</span>
-                        <input type="text" id="cn-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-indigo-500 outline-none transition" placeholder="等待分析...">
-                        <button onclick="copyText('cn-keywords')" class="text-zinc-600 hover:text-white"><i class="far fa-copy"></i></button>
+                        <input type="text" id="cn-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-red-500 outline-none transition" placeholder="等待分析...">
                     </div>
                     <div class="flex items-center gap-3">
                         <span class="text-[10px] text-zinc-500 w-16 text-right font-bold">EN (专业)</span>
-                        <input type="text" id="en-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-indigo-500 outline-none transition" placeholder="Waiting for analysis...">
-                        <button onclick="copyText('en-keywords')" class="text-zinc-600 hover:text-white"><i class="far fa-copy"></i></button>
+                        <input type="text" id="en-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-red-500 outline-none transition" placeholder="Waiting for analysis...">
                     </div>
                 </div>
                 <div class="mt-4 flex justify-between items-center">
                     <div class="flex items-center gap-2">
-                        <input type="checkbox" id="show-preview" class="accent-indigo-500" checked onchange="togglePreviewArea()">
-                        <label for="show-preview" class="text-[10px] text-zinc-500 cursor-pointer select-none">显示 Tenor 预览 (质量较低)</label>
+                        <input type="checkbox" id="show-preview" class="accent-red-500" checked onchange="togglePreviewArea()">
+                        <label for="show-preview" class="text-[10px] text-zinc-500 cursor-pointer select-none">显示 Tenor 预览</label>
                     </div>
-                    <button onclick="refreshLinks()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-4 py-2 rounded font-bold shadow-lg shadow-indigo-900/50 transition">
+                    <button onclick="refreshLinks()" class="bg-red-600 hover:bg-red-500 text-white text-xs px-4 py-2 rounded font-bold shadow-lg shadow-red-900/50 transition">
                         <i class="fas fa-bolt"></i> 执行搜索
                     </button>
                 </div>
@@ -115,7 +112,6 @@
         <section id="preview-section" class="border-t border-zinc-900 pt-6 transition-all duration-300">
             <h2 class="text-xs font-bold text-zinc-500 mb-4 flex items-center gap-2">
                 <i class="fas fa-images"></i> 快速预览 (Tenor)
-                <span class="text-[9px] bg-zinc-900 px-2 py-0.5 rounded text-zinc-600">仅供参考</span>
             </h2>
             <div id="results-grid" class="grid grid-cols-2 md:grid-cols-6 gap-3 min-h-[100px]">
                 <div class="col-span-full text-center py-10 text-zinc-700 text-xs">
@@ -128,67 +124,73 @@
 
     <div id="settings-panel" class="settings-panel fixed top-0 right-0 h-full w-[400px] bg-[#0d0d0d] border-l border-zinc-800 z-50 p-6 shadow-2xl flex flex-col gap-4">
         <div class="flex justify-between items-center">
-            <h2 class="font-bold text-white">⚙️ 全局设置</h2>
+            <h2 class="font-bold text-white">⚙️ 设置</h2>
             <button onclick="toggleSettings()" class="text-zinc-500 hover:text-white">✕</button>
         </div>
         
         <div>
-            <label class="block text-xs font-bold text-zinc-500 mb-1">API Key</label>
-            <input type="text" id="api-key-input" class="w-full bg-zinc-900 border border-zinc-700 rounded p-2 text-xs text-white font-mono">
+            <label class="block text-xs font-bold text-zinc-500 mb-1">API Key (已强制更新)</label>
+            <input type="text" id="api-key-input" class="w-full bg-zinc-900 border border-zinc-700 rounded p-2 text-xs text-white font-mono" readonly>
         </div>
 
         <div class="flex-1 flex flex-col min-h-0">
             <div class="flex justify-between items-center mb-2">
-                <label class="block text-xs font-bold text-zinc-500">模型列表 (自动记忆)</label>
-                <button onclick="scanModels()" class="text-[10px] text-indigo-400 hover:text-indigo-300">刷新</button>
+                <label class="block text-xs font-bold text-zinc-500">模型列表</label>
+                <button onclick="scanModels()" class="text-[10px] text-red-400 hover:text-red-300">刷新</button>
             </div>
             <div id="model-list" class="flex-1 bg-zinc-900 border border-zinc-700 rounded overflow-y-auto"></div>
         </div>
 
-        <button onclick="saveSettings()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-sm font-bold">保存并应用</button>
+        <button onclick="saveSettings()" class="w-full py-3 bg-red-600 hover:bg-red-500 text-white rounded text-sm font-bold">保存并应用</button>
+        <div class="console-box" id="debug-log">Log initialized.</div>
     </div>
     <div id="settings-overlay" onclick="toggleSettings()" class="fixed inset-0 bg-black/50 z-40 hidden backdrop-blur-sm"></div>
 
     <script>
-        // 你的 Key
-        const MY_KEY = "AIzaSyAnz-ZEKHHB34IJIRM31m6p4gq8y9es0tM";
+        // --- 核心配置：使用新 Key ---
+        const NEW_KEY = "AIzaSyA33TEP_08C9zrHAYtnoMV4LDF1STyynhw";
         const TENOR_KEY = "LIVDSRZULELA";
         
         let CONFIG = {
-            apiKey: MY_KEY,
-            // 默认 endpoint，如果没有缓存会用这个
+            apiKey: NEW_KEY,
             endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
         };
 
-        // --- 1. 初始化 (自动记忆) ---
+        // --- 1. 初始化 (强制更新 Key) ---
         function init() {
-            // 读取缓存
+            // 读取缓存，但强制覆盖 Key
             if(localStorage.getItem('motiflow_v22')) {
                 const saved = JSON.parse(localStorage.getItem('motiflow_v22'));
-                // 仅读取 endpoint，Key 强制使用代码里的（防止缓存了旧 Key）
                 if(saved.endpoint) CONFIG.endpoint = saved.endpoint;
             }
+            // 强制写入新 Key 到内存
+            CONFIG.apiKey = NEW_KEY; 
             
             // UI 更新
             document.getElementById('api-key-input').value = CONFIG.apiKey;
             updateModelLabel();
             
-            // 自动加载模型列表（静默加载，不弹窗）
+            // 自动扫描模型
             scanModels(true);
         }
 
         function updateModelLabel() {
-            // 从 endpoint 中提取模型名
-            const name = CONFIG.endpoint.match(/models\/(.*?):/)?.[1] || "Unknown";
+            const name = CONFIG.endpoint.match(/models\/(.*?):/)?.[1] || "Default (1.5-flash)";
             document.getElementById('current-model-label').innerText = name;
         }
 
-        // --- 2. 设置与模型 ---
         function toggleSettings() {
             document.getElementById('settings-panel').classList.toggle('open');
             document.getElementById('settings-overlay').classList.toggle('hidden');
         }
 
+        function log(msg) {
+            const box = document.getElementById('debug-log');
+            box.innerText += `\n> ${msg}`;
+            box.scrollTop = box.scrollHeight;
+        }
+
+        // --- 2. 扫描模型 ---
         async function scanModels(silent = false) {
             const list = document.getElementById('model-list');
             if(!silent) list.innerHTML = '<div class="text-zinc-500 text-xs p-4">Scanning...</div>';
@@ -200,65 +202,64 @@
                 
                 const recommended = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-latest'];
 
-                data.models.forEach(m => {
-                    if(m.supportedGenerationMethods?.includes('generateContent')) {
-                        const name = m.name.replace('models/', '');
-                        const div = document.createElement('div');
-                        
-                        // 判断是否是当前选中的模型
-                        const isActive = CONFIG.endpoint.includes(name);
-                        
-                        div.className = `model-item ${isActive ? 'active' : ''}`;
-                        let html = `<span>${name}</span>`;
-                        if(recommended.includes(name)) html += `<span class="tag-rec">推荐</span>`;
-                        
-                        div.innerHTML = html;
-                        div.onclick = () => {
-                            CONFIG.endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${name}:generateContent`;
-                            // 更新 UI
-                            document.querySelectorAll('.model-item').forEach(e => e.classList.remove('active'));
-                            div.classList.add('active');
-                            updateModelLabel();
-                        };
-                        list.appendChild(div);
-                    }
-                });
+                if(data.models) {
+                    data.models.forEach(m => {
+                        if(m.supportedGenerationMethods?.includes('generateContent')) {
+                            const name = m.name.replace('models/', '');
+                            const div = document.createElement('div');
+                            const isActive = CONFIG.endpoint.includes(name);
+                            div.className = `model-item ${isActive ? 'active' : ''}`;
+                            
+                            let html = `<span>${name}</span>`;
+                            if(recommended.includes(name)) html += `<span class="tag-rec">推荐</span>`;
+                            
+                            div.innerHTML = html;
+                            div.onclick = () => {
+                                CONFIG.endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${name}:generateContent`;
+                                document.querySelectorAll('.model-item').forEach(e => e.classList.remove('active'));
+                                div.classList.add('active');
+                                updateModelLabel();
+                            };
+                            list.appendChild(div);
+                        }
+                    });
+                } else {
+                    if(!silent) list.innerHTML = '<div class="text-red-500 text-xs p-4">No models found. Check connection.</div>';
+                }
             } catch(e) { 
                 if(!silent) list.innerHTML = `<div class="text-red-500 text-xs p-4">Error: ${e.message}</div>`;
             }
         }
 
         function saveSettings() {
-            CONFIG.apiKey = document.getElementById('api-key-input').value.trim();
             localStorage.setItem('motiflow_v22', JSON.stringify(CONFIG));
-            alert("设置已保存 (下次自动加载)");
+            alert("设置已保存");
             toggleSettings();
         }
 
-        // --- 3. 上传逻辑 (免刷新) ---
-        function triggerUpload() {
-            document.getElementById('file-input').click();
-        }
+        // --- 3. 上传与分析 (安全全关) ---
+        function triggerUpload() { document.getElementById('file-input').click(); }
 
-        // 绑定文件变化事件
         document.getElementById('file-input').addEventListener('change', async function(e) {
             const file = e.target.files[0];
             if(!file) return;
 
-            // UI 状态重置
             document.getElementById('drop-area').classList.add('upload-active');
-            document.getElementById('cn-keywords').placeholder = "AI 分析中...";
+            document.getElementById('cn-keywords').value = ""; 
+            document.getElementById('en-keywords').value = "";
+            document.getElementById('cn-keywords').placeholder = "AI 正在分析...";
             document.getElementById('en-keywords').placeholder = "Analyzing...";
-            document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-indigo-500 animate-pulse text-xs">AI 正在思考...</div>';
+            document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-red-500 animate-pulse text-xs">AI 正在思考...</div>';
 
             try {
                 const base64 = await toBase64(file);
                 
                 const prompt = `
-                    Analyze this Game VFX. Return a JSON object with:
-                    "cn": Chinese keywords for Huaban (e.g., "Unity 刀光特效").
-                    "en": English keywords for ArtStation (e.g., "Unity Slash VFX").
-                    "tenor": A specific English keyword for GIF search (add "gameplay" or "unity" to filter memes).
+                    Analyze this Game VFX image. Return a JSON object:
+                    "cn": Chinese keywords (Huaban).
+                    "en": English keywords (ArtStation).
+                    "tenor": English keywords for GIF search.
+                    Do not use markdown blocks. Return RAW JSON.
                 `;
 
                 const res = await fetch(`${CONFIG.endpoint}?key=${CONFIG.apiKey}`, {
@@ -268,33 +269,48 @@
                         contents: [{ parts: [
                             { text: prompt },
                             { inline_data: { mime_type: "image/jpeg", data: base64.split(',')[1] } }
-                        ]}]
+                        ]}],
+                        // 关键：关闭所有安全拦截
+                        safetySettings: [
+                            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                        ]
                     })
                 });
 
+                if(!res.ok) {
+                    const errTxt = await res.text();
+                    throw new Error(`API Error ${res.status}: ${errTxt}`);
+                }
+
                 const raw = await res.text();
-                // 简单清洗 JSON
-                const jsonStr = raw.replace(/```json/g, '').replace(/```/g, '').trim();
+                // 极简 JSON 提取
+                let jsonStr = raw;
+                if(raw.includes('```json')) {
+                    jsonStr = raw.split('```json')[1].split('```')[0].trim();
+                } else if(raw.includes('```')) {
+                    jsonStr = raw.split('```')[1].split('```')[0].trim();
+                }
+
                 const result = JSON.parse(jsonStr);
 
-                // 填入数据
                 document.getElementById('cn-keywords').value = result.cn;
                 document.getElementById('en-keywords').value = result.en;
-                
-                // 自动刷新链接
                 refreshLinks(result.tenor || result.en);
 
             } catch(e) {
-                alert("AI 分析失败: " + e.message + "\n请检查网络或 Key。");
-                document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-red-500 text-xs">分析失败</div>';
+                alert("识别失败: " + e.message + "\n建议在设置中切换为 gemini-1.5-flash");
+                document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-red-500 text-xs">识别失败</div>';
+                log(e.message);
             } finally {
-                // 清理状态，允许重复上传
                 document.getElementById('drop-area').classList.remove('upload-active');
-                this.value = ''; // 关键：清空 input value，否则选同一张图不会触发 change
+                this.value = ''; 
             }
         });
 
-        // --- 4. 功能逻辑 ---
+        // --- 4. 辅助功能 ---
         function resetAll() {
             document.getElementById('cn-keywords').value = "";
             document.getElementById('en-keywords').value = "";
@@ -306,40 +322,33 @@
             const cn = document.getElementById('cn-keywords').value.trim() || "游戏特效";
             const en = document.getElementById('en-keywords').value.trim() || "Game VFX";
 
-            // 更新外部链接
             document.getElementById('link-huaban').href = `https://huaban.com/search/?q=${encodeURIComponent(cn)}`;
             document.getElementById('link-pinterest').href = `https://www.pinterest.com/search/pins/?q=${encodeURIComponent(en)}`;
             document.getElementById('link-artstation').href = `https://www.artstation.com/search?sort_by=relevance&query=${encodeURIComponent(en)}`;
             document.getElementById('link-bilibili').href = `https://search.bilibili.com/all?keyword=${encodeURIComponent(cn + " 教程")}`;
 
-            // Tenor 搜索 (带优化后缀)
             const showTenor = document.getElementById('show-preview').checked;
             if (showTenor) {
-                // 如果 AI 没给专门的 tenor 词，就用英文词 + 硬核后缀
                 const query = tenorQueryOverride || en;
-                const refinedQuery = query + " unity ue5 gameplay -meme -cartoon"; 
+                const refinedQuery = query + " unity ue5 gameplay -meme"; 
                 searchTenor(refinedQuery);
-            } else {
-                document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-zinc-700 text-xs">预览已隐藏</div>';
             }
         }
 
         async function searchTenor(query) {
             const grid = document.getElementById('results-grid');
             grid.innerHTML = '<div class="col-span-full text-center py-10 text-zinc-500 text-xs">正在搜索预览...</div>';
-            
             try {
                 const res = await fetch(`https://g.tenor.com/v1/search?q=${encodeURIComponent(query)}&key=${TENOR_KEY}&limit=12&media_filter=minimal`);
                 const data = await res.json();
-                
                 if(data.results && data.results.length) {
                     grid.innerHTML = data.results.map(item => `
-                        <div class="aspect-square bg-zinc-900 rounded overflow-hidden cursor-pointer opacity-80 hover:opacity-100 transition border border-zinc-800 hover:border-indigo-500" onclick="window.open('${item.itemurl}', '_blank')">
+                        <div class="aspect-square bg-zinc-900 rounded overflow-hidden cursor-pointer opacity-80 hover:opacity-100 transition border border-zinc-800 hover:border-red-500" onclick="window.open('${item.itemurl}', '_blank')">
                             <img src="${item.media[0].tinygif.url}" class="w-full h-full object-cover" loading="lazy">
                         </div>
                     `).join('');
                 } else {
-                    grid.innerHTML = '<div class="col-span-full text-center py-10 text-zinc-600 text-xs">Tenor 暂无相关素材 (建议使用上方专业传送门)</div>';
+                    grid.innerHTML = '<div class="col-span-full text-center py-10 text-zinc-600 text-xs">无相关素材</div>';
                 }
             } catch(e) {
                 grid.innerHTML = '<div class="col-span-full text-center py-10 text-zinc-600 text-xs">预览加载失败</div>';
@@ -349,19 +358,8 @@
         function togglePreviewArea() {
             const section = document.getElementById('preview-section');
             const show = document.getElementById('show-preview').checked;
-            if(show) {
-                section.classList.remove('opacity-30', 'pointer-events-none');
-                refreshLinks(); // 重新触发搜索
-            } else {
-                section.classList.add('opacity-30', 'pointer-events-none');
-            }
-        }
-
-        function copyText(id) {
-            const el = document.getElementById(id);
-            el.select();
-            document.execCommand('copy');
-            alert("已复制: " + el.value);
+            if(show) { section.classList.remove('opacity-30', 'pointer-events-none'); refreshLinks(); } 
+            else { section.classList.add('opacity-30', 'pointer-events-none'); }
         }
 
         function toBase64(file) {
@@ -372,9 +370,7 @@
             });
         }
 
-        // 启动
         init();
-
     </script>
 </body>
 </html>
