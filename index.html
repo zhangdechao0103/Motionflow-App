@@ -3,29 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer">
-    <title>Motiflow VFX - AI 生命线版</title>
+    <title>Motiflow VFX - 网络诊断版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #050505; color: #e0e0e0; }
         .glass { background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        
-        /* 霓虹聚焦 */
         .search-input:focus { box-shadow: 0 0 20px rgba(0, 229, 255, 0.3); border-color: #00e5ff; }
-        
         .vfx-card { transition: all 0.2s; border: 1px solid #222; }
         .vfx-card:hover { transform: translateY(-4px); border-color: #00e5ff; z-index: 10; }
-        
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 100; opacity: 0; transition: opacity 0.2s; }
         .modal.active { display: flex; opacity: 1; }
-
-        /* 设置面板动画 */
         .settings-panel { transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .settings-panel.open { transform: translateX(0); }
-
-        /* 滚动条 */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #111; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        /* 错误日志样式 */
+        .log-box { font-family: 'Consolas', monospace; font-size: 10px; background: #000; border: 1px solid #333; color: #0f0; padding: 10px; height: 100px; overflow-y: auto; display: none; }
+        .log-box.error { color: #ff5555; }
     </style>
 </head>
 <body class="min-h-screen bg-[#050505] flex flex-col overflow-x-hidden">
@@ -34,16 +26,15 @@
         <div class="max-w-[1800px] mx-auto px-6 py-4">
             <div class="flex justify-between items-center mb-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-cyan-600 rounded flex items-center justify-center font-bold text-black shadow-[0_0_15px_rgba(6,182,212,0.5)]">AI</div>
-                    <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-cyan-500 font-normal">| ONLINE</span></span>
+                    <div class="w-8 h-8 bg-cyan-600 rounded flex items-center justify-center font-bold text-black shadow-[0_0_15px_rgba(6,182,212,0.5)]">11</div>
+                    <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-cyan-500 font-normal">| DIAGNOSTIC</span></span>
                 </div>
-                
                 <div class="flex items-center gap-4">
                     <div id="ai-status" class="text-[10px] font-mono text-zinc-600 flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-zinc-600"></span> WAITING
+                        <span class="w-2 h-2 rounded-full bg-zinc-600"></span> IDLE
                     </div>
-                    <button onclick="toggleSettings()" class="text-zinc-400 hover:text-white transition p-2 rounded-full hover:bg-white/10">
-                        ⚙️ 设置 API
+                    <button onclick="toggleSettings()" class="text-white bg-zinc-800 px-3 py-1 rounded-full text-xs hover:bg-zinc-700 border border-zinc-600 animate-pulse">
+                        🛠️ 修复连接
                     </button>
                 </div>
             </div>
@@ -57,68 +48,63 @@
                         <span class="text-[10px] font-bold">识图</span>
                     </button>
                 </div>
-
                 <div class="flex-1 relative">
                     <input type="text" id="search-input" 
                            class="search-input w-full h-14 bg-black border border-zinc-700 rounded-lg px-6 text-lg text-white placeholder-zinc-600 outline-none transition"
-                           placeholder="AI 将自动在此填入关键词，或手动输入..."
+                           placeholder="AI 准备就绪..."
                            onkeydown="if(event.key === 'Enter') runSearch()">
-                    <button onclick="runSearch()" class="absolute right-2 top-2 bottom-2 px-6 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-md transition">
-                        搜索
-                    </button>
+                    <button onclick="runSearch()" class="absolute right-2 top-2 bottom-2 px-6 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-md transition">搜索</button>
                 </div>
-            </div>
-
-            <div class="flex flex-wrap gap-2 mt-4" id="quick-tags">
-                <span class="text-[10px] text-zinc-500 py-1 uppercase tracking-widest">Tags:</span>
-                <button class="tag-btn bg-zinc-900 border border-zinc-700 text-zinc-400 px-3 py-1 rounded text-xs hover:border-cyan-500 hover:text-cyan-400" onclick="addTag('Unity VFX')">Unity</button>
-                <button class="tag-btn bg-zinc-900 border border-zinc-700 text-zinc-400 px-3 py-1 rounded text-xs hover:border-cyan-500 hover:text-cyan-400" onclick="addTag('Anime Slash')">二次元刀光</button>
-                <button class="tag-btn bg-zinc-900 border border-zinc-700 text-zinc-400 px-3 py-1 rounded text-xs hover:border-cyan-500 hover:text-cyan-400" onclick="addTag('Pixel Explosion')">像素爆炸</button>
             </div>
             
             <div class="flex gap-4 mt-4 pt-4 border-t border-white/5 overflow-x-auto">
-                <a id="link-huaban" target="_blank" href="https://huaban.com/search/?q=游戏特效" class="flex items-center gap-2 px-4 py-2 bg-[#c8222c]/10 text-[#c8222c] border border-[#c8222c]/30 rounded hover:bg-[#c8222c] hover:text-white transition text-xs font-bold whitespace-nowrap">
-                    🌸 去花瓣搜 "<span id="text-huaban">...</span>"
-                </a>
-                <a id="link-bilibili" target="_blank" href="https://search.bilibili.com/all?keyword=游戏特效" class="flex items-center gap-2 px-4 py-2 bg-[#00aeec]/10 text-[#00aeec] border border-[#00aeec]/30 rounded hover:bg-[#00aeec] hover:text-white transition text-xs font-bold whitespace-nowrap">
-                    📺 去B站搜 "<span id="text-bilibili">...</span>"
-                </a>
+                <a id="link-huaban" target="_blank" href="https://huaban.com/search/?q=游戏特效" class="px-4 py-2 bg-[#c8222c]/10 text-[#c8222c] border border-[#c8222c]/30 rounded hover:bg-[#c8222c] hover:text-white transition text-xs font-bold whitespace-nowrap">🌸 花瓣网</a>
+                <a id="link-bilibili" target="_blank" href="https://search.bilibili.com/all?keyword=游戏特效" class="px-4 py-2 bg-[#00aeec]/10 text-[#00aeec] border border-[#00aeec]/30 rounded hover:bg-[#00aeec] hover:text-white transition text-xs font-bold whitespace-nowrap">📺 Bilibili</a>
             </div>
         </div>
     </nav>
 
-    <div id="settings-panel" class="settings-panel fixed top-0 right-0 h-full w-80 bg-[#111] border-l border-zinc-800 z-50 p-6 shadow-2xl flex flex-col gap-6">
+    <div id="settings-panel" class="settings-panel fixed top-0 right-0 h-full w-96 bg-[#111] border-l border-zinc-800 z-50 p-6 shadow-2xl flex flex-col gap-6 overflow-y-auto">
         <div class="flex justify-between items-center">
-            <h2 class="text-xl font-bold text-white">⚙️ API 设置</h2>
+            <h2 class="text-xl font-bold text-white">⚙️ 网络诊断室</h2>
             <button onclick="toggleSettings()" class="text-zinc-500 hover:text-white">✕</button>
         </div>
         
-        <div>
-            <label class="block text-xs text-zinc-500 mb-2 uppercase font-bold">Gemini API Key</label>
-            <input type="text" id="api-key-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white focus:border-cyan-500 outline-none" placeholder="AIzaSy...">
-            <p class="text-[10px] text-zinc-600 mt-1">默认使用内置 Key，如失效请填入自己的。</p>
-        </div>
+        <div id="debug-log" class="log-box rounded">等待测试...</div>
 
-        <div>
-            <label class="block text-xs text-zinc-500 mb-2 uppercase font-bold">API Base URL (代理地址)</label>
-            <input type="text" id="base-url-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white focus:border-cyan-500 outline-none" value="https://generativelanguage.googleapis.com">
-            <p class="text-[10px] text-zinc-600 mt-2 leading-relaxed">
-                <span class="text-red-400">重要提示：</span>如果你在中国大陆，默认地址会被墙。请将上方地址修改为你的反代地址。<br>
-                或者尝试搜索 "Gemini API Proxy" 获取公共地址。
+        <div class="p-4 bg-zinc-900 rounded-lg border border-zinc-800">
+            <label class="block text-xs text-cyan-400 mb-2 font-bold">STEP 1: API KEY (关键)</label>
+            <input type="text" id="api-key-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white focus:border-cyan-500 outline-none mb-2" placeholder="AIzaSy...">
+            <p class="text-[10px] text-zinc-500">
+                如果测试失败，请去 <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-blue-400 underline">Google AI Studio</a> 申请一个新的免费 Key (需要 VPN)。
             </p>
         </div>
 
-        <button onclick="saveSettings()" class="w-full py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded font-bold text-sm transition">
-            保存并重试
+        <div class="p-4 bg-zinc-900 rounded-lg border border-zinc-800">
+            <label class="block text-xs text-cyan-400 mb-2 font-bold">STEP 2: 网络线路</label>
+            <select id="proxy-select" onchange="updateProxyInput()" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white mb-2">
+                <option value="https://generativelanguage.googleapis.com">官方直连 (需要全局 VPN)</option>
+                <option value="https://gemini-proxy-v1.vercel.app">公益代理线路 A (推荐)</option>
+                <option value="custom">自定义地址</option>
+            </select>
+            <input type="text" id="base-url-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white focus:border-cyan-500 outline-none" value="https://generativelanguage.googleapis.com">
+        </div>
+
+        <button onclick="testConnection()" class="w-full py-3 bg-green-600 hover:bg-green-500 text-white rounded font-bold text-sm transition">
+            📡 点击测试 AI 连接
+        </button>
+        
+        <button onclick="saveSettings()" class="w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded font-bold text-sm transition border border-zinc-700">
+            💾 保存设置
         </button>
     </div>
     <div id="settings-overlay" onclick="toggleSettings()" class="fixed inset-0 bg-black/50 z-40 hidden backdrop-blur-sm"></div>
 
     <main class="flex-1 max-w-[1800px] w-full mx-auto p-6" id="main-scroll">
-        <div id="results-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+        <div id="results-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             <div class="col-span-full text-center py-20 text-zinc-700 border-2 border-dashed border-zinc-800 rounded-xl">
-                <p class="text-lg font-bold mb-2">AI IS READY</p>
-                <p class="text-sm">请上传图片，如果失败请点击右上角设置检查 API 连通性</p>
+                <p class="text-lg font-bold mb-2">READY</p>
+                <p class="text-sm">如果 AI 无法工作，请点击右上角 <span class="text-cyan-500">⚙️ 修复连接</span></p>
             </div>
         </div>
         <div id="loader" class="hidden text-center py-10 text-cyan-500 text-xs animate-pulse">LOADING...</div>
@@ -130,224 +116,215 @@
                 <img id="modal-img" class="w-full h-full object-contain">
             </div>
             <div class="mt-6 flex gap-4">
-                <a id="source-btn" href="#" target="_blank" class="px-6 py-3 bg-zinc-800 hover:bg-white hover:text-black text-white rounded font-bold text-sm transition border border-zinc-700">
-                    🔗 来源网站
-                </a>
-                <button onclick="saveToEagle()" class="px-6 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded font-bold text-sm shadow-[0_0_20px_rgba(8,145,178,0.4)] transition">
-                    ⬇ 保存到 Eagle
-                </button>
+                <a id="source-btn" href="#" target="_blank" class="px-6 py-3 bg-zinc-800 hover:bg-white hover:text-black text-white rounded font-bold text-sm transition border border-zinc-700">🔗 来源网站</a>
+                <button onclick="saveToEagle()" class="px-6 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded font-bold text-sm shadow-[0_0_20px_rgba(8,145,178,0.4)] transition">⬇ 保存到 Eagle</button>
                 <button onclick="closeModal()" class="w-12 h-12 rounded-full border border-white/20 hover:bg-white/10 text-white transition flex items-center justify-center">✕</button>
             </div>
         </div>
     </div>
 
     <script>
-        // 默认配置
+        // 配置中心
         let CONFIG = {
-            apiKey: "AIzaSyB9ww1axSGsO4iYUt9UaOOJiBAuoa0wYOQ", // 默认 Key
-            baseUrl: "https://generativelanguage.googleapis.com" // 默认官方地址
+            // 这是一个公共 Key，很有可能已经失效。请务必替换为你自己的！
+            apiKey: "AIzaSyB9ww1axSGsO4iYUt9UaOOJiBAuoa0wYOQ", 
+            baseUrl: "https://generativelanguage.googleapis.com"
         };
-
         const TENOR_KEY = "LIVDSRZULELA";
-
-        let nextCursor = "";
-        let isLoading = false;
-        let currentImgUrl = "";
         
-        // DOM
-        const searchInput = document.getElementById('search-input');
-        const fileInput = document.getElementById('file-input');
-        const resultsGrid = document.getElementById('results-grid');
-        const aiStatus = document.getElementById('ai-status');
-        const settingsPanel = document.getElementById('settings-panel');
-        const settingsOverlay = document.getElementById('settings-overlay');
-
-        // 初始化加载配置
-        if(localStorage.getItem('motiflow_config')) {
-            const saved = JSON.parse(localStorage.getItem('motiflow_config'));
-            if(saved.apiKey) CONFIG.apiKey = saved.apiKey;
-            if(saved.baseUrl) CONFIG.baseUrl = saved.baseUrl;
+        // 初始化
+        const logBox = document.getElementById('debug-log');
+        if(localStorage.getItem('motiflow_v11')) {
+            CONFIG = JSON.parse(localStorage.getItem('motiflow_v11'));
         }
         document.getElementById('api-key-input').value = CONFIG.apiKey;
         document.getElementById('base-url-input').value = CONFIG.baseUrl;
 
-        // 设置面板逻辑
+        function log(msg, isError = false) {
+            logBox.style.display = 'block';
+            logBox.innerHTML += `<div class="${isError?'text-red-500':'text-green-500'}">> ${msg}</div>`;
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
         function toggleSettings() {
-            settingsPanel.classList.toggle('open');
-            settingsOverlay.classList.toggle('hidden');
+            document.getElementById('settings-panel').classList.toggle('open');
+            document.getElementById('settings-overlay').classList.toggle('hidden');
+        }
+
+        function updateProxyInput() {
+            const select = document.getElementById('proxy-select');
+            const input = document.getElementById('base-url-input');
+            if(select.value !== 'custom') {
+                input.value = select.value;
+            }
+        }
+
+        // --- 核心诊断功能 ---
+        async function testConnection() {
+            const key = document.getElementById('api-key-input').value.trim();
+            const url = document.getElementById('base-url-input').value.trim();
+            
+            log("开始测试连接...", false);
+            log(`Endpoint: ${url}`, false);
+
+            try {
+                // 尝试发送一个最简单的请求
+                const response = await fetch(`${url}/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: "Hello" }] }]
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log("✅ 连接成功！", false);
+                    log("AI 回复: " + data.candidates[0].content.parts[0].text.slice(0, 20) + "...", false);
+                    alert("✅ 网络通畅，API Key 有效！你可以开始使用了。");
+                } else {
+                    const errText = await response.text();
+                    log("❌ 连接失败 HTTP " + response.status, true);
+                    log("原因: " + errText, true);
+                    
+                    if(response.status === 403 || response.status === 400) {
+                        alert("❌ API Key 无效。\n\n这意味着你的网络是通的，但 Key 坏了。请去 Google AI Studio 申请新 Key。");
+                    } else {
+                        alert("❌ 网络依然不通。\n\n请尝试切换“线路设置”中的代理地址，或者检查你的 VPN 是否开启了全局模式。");
+                    }
+                }
+            } catch (e) {
+                log("❌ 网络错误: " + e.message, true);
+                if(e.message.includes('Failed to fetch')) {
+                    alert("❌ 无法连接服务器 (Network Error)。\n\n这通常是因为：\n1. 你的 VPN 没有代理该域名。\n2. 或者你需要使用“公益代理线路”。\n\n请在下方“网络线路”中选择“公益代理线路 A”试试！");
+                }
+            }
         }
 
         function saveSettings() {
-            const newKey = document.getElementById('api-key-input').value.trim();
-            const newUrl = document.getElementById('base-url-input').value.trim().replace(/\/$/, ""); // 去掉末尾斜杠
-            
-            if(newKey) CONFIG.apiKey = newKey;
-            if(newUrl) CONFIG.baseUrl = newUrl;
-            
-            localStorage.setItem('motiflow_config', JSON.stringify(CONFIG));
+            CONFIG.apiKey = document.getElementById('api-key-input').value.trim();
+            CONFIG.baseUrl = document.getElementById('base-url-input').value.trim();
+            localStorage.setItem('motiflow_v11', JSON.stringify(CONFIG));
+            alert("设置已保存！");
             toggleSettings();
-            alert("设置已保存！请重新尝试上传图片。");
         }
 
-        // 监听输入
-        searchInput.addEventListener('input', (e) => updatePortals(e.target.value));
+        // 主逻辑：上传识图
+        const fileInput = document.getElementById('file-input');
+        const searchInput = document.getElementById('search-input');
+        const aiStatus = document.getElementById('ai-status');
 
-        function addTag(tag) {
-            const current = searchInput.value;
-            searchInput.value = current ? current + " " + tag : tag;
-            updatePortals(searchInput.value);
-            runSearch();
-        }
-
-        function updatePortals(val) {
-            const query = val || "游戏特效";
-            document.getElementById('text-huaban').innerText = query;
-            document.getElementById('link-huaban').href = `https://huaban.com/search/?q=${encodeURIComponent(query + " 游戏特效")}`;
-            document.getElementById('text-bilibili').innerText = query;
-            document.getElementById('link-bilibili').href = `https://search.bilibili.com/all?keyword=${encodeURIComponent(query + " Unity教程")}`;
-        }
-
-        // 核心：AI 识图 (带重试机制)
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
-            updateAIStatus("CONNECTING...", "text-yellow-500 animate-pulse");
-            searchInput.placeholder = "AI 正在努力连接...";
+            updateStatus("CONNECTING...", "text-yellow-500 animate-pulse");
+            searchInput.placeholder = "AI 正在分析...";
 
             try {
                 const base64 = await toBase64(file);
                 
-                // 构建 API URL，使用用户配置的 Base URL
-                const apiUrl = `${CONFIG.baseUrl}/v1beta/models/gemini-1.5-flash:generateContent?key=${CONFIG.apiKey}`;
-
-                const response = await fetch(apiUrl, {
+                const response = await fetch(`${CONFIG.baseUrl}/v1beta/models/gemini-1.5-flash:generateContent?key=${CONFIG.apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [
-                            { text: "Analyze this Game VFX. Output 3 English keywords separated by space (e.g. Unity Explosion Anime)." },
+                            { text: "Analyze Game VFX. Output 3 English keywords (e.g. Unity Fire Explosion)." },
                             { inline_data: { mime_type: "image/jpeg", data: base64.split(',')[1] } }
                         ]}]
                     })
                 });
 
-                if (!response.ok) {
-                    const errText = await response.text();
-                    throw new Error(`API Error: ${response.status} - ${errText}`);
-                }
+                if (!response.ok) throw new Error("AI Connect Failed");
 
                 const data = await response.json();
-                
-                if (!data.candidates || !data.candidates[0].content) {
-                    throw new Error("AI Returned Empty Response");
-                }
-
                 const keywords = data.candidates[0].content.parts[0].text.trim();
                 
-                // 成功！
                 searchInput.value = keywords;
                 updatePortals(keywords);
                 runSearch();
-                updateAIStatus("ONLINE", "text-green-500");
+                updateStatus("ONLINE", "text-green-500");
 
             } catch (err) {
                 console.error(err);
-                updateAIStatus("OFFLINE (Check Settings)", "text-red-500 font-bold");
-                
-                // 自动弹出设置面板，提示用户
-                if (err.message.includes("Failed to fetch") || err.message.includes("404")) {
-                    alert("AI 连接失败！\n\n原因：你的网络无法直接连接 Google API (404/Network Error)。\n\n解决办法：\n1. 请点击右上角设置。\n2. 在 Base URL 中填入一个可用的 Gemini 代理地址。\n3. 或者开启全局 VPN。");
-                    toggleSettings();
-                } else {
-                    alert(`AI 报错: ${err.message}`);
-                }
+                updateStatus("OFFLINE", "text-red-500 font-bold");
+                // 失败自动弹出设置
+                toggleSettings();
+                log("自动分析失败，请检查连接设置。", true);
+                testConnection(); // 自动跑一次测试
             }
         });
 
-        function updateAIStatus(text, classes) {
-            const el = document.getElementById('ai-status');
-            el.innerHTML = `<span class="w-2 h-2 rounded-full ${classes.includes('red') ? 'bg-red-500' : (classes.includes('green') ? 'bg-green-500' : 'bg-yellow-500')}"></span> ${text}`;
-            el.className = `text-[10px] font-mono flex items-center gap-2 ${classes}`;
+        function updateStatus(text, classes) {
+            aiStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-current"></span> ${text}`;
+            aiStatus.className = `text-[10px] font-mono flex items-center gap-2 ${classes}`;
         }
 
-        async function runSearch(isAppend = false) {
+        // Tenor 搜索
+        async function runSearch() {
             const val = searchInput.value.trim();
             if (!val) return;
-
-            if (!isAppend) {
-                resultsGrid.innerHTML = "";
-                nextCursor = "";
-            }
-            isLoading = true;
+            
+            document.getElementById('results-grid').innerHTML = "";
             document.getElementById('loader').classList.remove('hidden');
+            updatePortals(val);
 
+            // 强制过滤
             const finalQuery = `${val} gameplay vfx -meme -funny`;
 
             try {
-                let url = `https://g.tenor.com/v1/search?q=${encodeURIComponent(finalQuery)}&key=${TENOR_KEY}&limit=20&media_filter=minimal`;
-                if (isAppend && nextCursor) url += `&pos=${nextCursor}`;
-
-                const res = await fetch(url);
+                const res = await fetch(`https://g.tenor.com/v1/search?q=${encodeURIComponent(finalQuery)}&key=${TENOR_KEY}&limit=20&media_filter=minimal`);
                 const data = await res.json();
-                nextCursor = data.next || "";
-
+                
                 if (data.results && data.results.length > 0) {
-                    const html = data.results.map(item => `
+                    document.getElementById('results-grid').innerHTML = data.results.map(item => `
                         <div class="vfx-card bg-[#111] rounded-lg overflow-hidden relative cursor-pointer group aspect-square"
                              onclick="openModal('${item.media[0].gif.url}', '${item.itemurl}')">
                             <img src="${item.media[0].tinygif.url}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition duration-300" loading="lazy">
                         </div>
                     `).join('');
-
-                    if (isAppend) resultsGrid.insertAdjacentHTML('beforeend', html);
-                    else resultsGrid.innerHTML = html;
-                } else if (!isAppend) {
-                    resultsGrid.innerHTML = `<div class="col-span-full text-center py-20 text-zinc-500">未找到结果，请尝试其他关键词。</div>`;
+                } else {
+                    document.getElementById('results-grid').innerHTML = `<div class="col-span-full text-center py-20 text-zinc-500">Tenor 无结果，请点击上方花瓣/B站。</div>`;
                 }
             } catch (e) {
-                resultsGrid.innerHTML = `<div class="col-span-full text-center py-20 text-red-500">Tenor 连接失败。</div>`;
+                document.getElementById('results-grid').innerHTML = `<div class="col-span-full text-center py-20 text-red-500">Tenor 连接失败。</div>`;
             } finally {
-                isLoading = false;
                 document.getElementById('loader').classList.add('hidden');
             }
         }
 
-        window.addEventListener('scroll', () => {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
-                if (!isLoading && nextCursor) runSearch(true);
-            }
-        });
-
-        function openModal(url, sourceUrl) {
-            currentImgUrl = url;
-            document.getElementById('modal-img').src = url;
-            document.getElementById('source-btn').href = sourceUrl;
-            document.getElementById('preview-modal').classList.add('active');
+        function updatePortals(val) {
+            document.getElementById('link-huaban').href = `https://huaban.com/search/?q=${encodeURIComponent(val + " 游戏特效")}`;
+            document.getElementById('link-bilibili').href = `https://search.bilibili.com/all?keyword=${encodeURIComponent(val + " Unity教程")}`;
         }
 
+        // 弹窗逻辑
+        function openModal(url, source) {
+            document.getElementById('modal-img').src = url;
+            document.getElementById('source-btn').href = source;
+            document.getElementById('preview-modal').classList.add('active');
+        }
         function closeModal() {
             document.getElementById('preview-modal').classList.remove('active');
-            setTimeout(() => document.getElementById('modal-img').src = '', 200);
         }
 
         async function saveToEagle() {
             try {
+                const url = document.getElementById('modal-img').src;
                 await fetch("http://localhost:44324/api/item/addFromURL", {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: currentImgUrl, name: "VFX_" + Date.now(), tags: ["Motiflow"] })
+                    body: JSON.stringify({ url: url, name: "VFX_" + Date.now(), tags: ["Motiflow"] })
                 });
                 alert("✅ 已保存到 Eagle!");
             } catch (e) { alert("⚠️ Eagle 未启动"); }
         }
 
         function toBase64(file) {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
             });
         }
     </script>
