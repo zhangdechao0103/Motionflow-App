@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer">
-    <title>Motiflow VFX - 直连手术刀 v16</title>
+    <title>Motiflow VFX - 模型雷达 v17</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #050505; color: #e0e0e0; }
@@ -16,12 +16,10 @@
         .settings-panel { transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .settings-panel.open { transform: translateX(0); }
         
-        /* 终端日志区 */
-        .console-box { font-family: 'Consolas', monospace; font-size: 11px; background: #000; border: 1px solid #333; padding: 10px; height: 140px; overflow-y: auto; color: #ccc; margin-bottom: 15px; }
-        .console-line { border-bottom: 1px solid #111; padding: 2px 0; word-break: break-all; }
-        .log-err { color: #f87171; }
-        .log-ok { color: #4ade80; }
-        .log-url { color: #60a5fa; }
+        /* 扫描结果样式 */
+        .model-item { cursor: pointer; padding: 8px; border-bottom: 1px solid #222; font-family: monospace; font-size: 11px; color: #aaa; transition: all 0.2s; }
+        .model-item:hover { background: #111; color: #fff; }
+        .model-item.active { background: #064e3b; color: #34d399; border-left: 3px solid #34d399; }
     </style>
 </head>
 <body class="min-h-screen bg-[#050505] flex flex-col overflow-x-hidden">
@@ -30,12 +28,12 @@
         <div class="max-w-[1800px] mx-auto px-6 py-4">
             <div class="flex justify-between items-center mb-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-cyan-600 rounded flex items-center justify-center font-bold text-black shadow-[0_0_15px_rgba(6,182,212,0.5)]">16</div>
-                    <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-cyan-500 font-normal">| SURGICAL</span></span>
+                    <div class="w-8 h-8 bg-orange-600 rounded flex items-center justify-center font-bold text-black shadow-[0_0_15px_rgba(234,88,12,0.5)]">17</div>
+                    <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-orange-500 font-normal">| SCANNER</span></span>
                 </div>
                 <div class="flex items-center gap-4">
-                    <button onclick="toggleSettings()" class="text-white bg-red-900/50 border border-red-500 px-3 py-1 rounded-full text-xs hover:bg-red-900 animate-pulse flex items-center gap-2">
-                        <span>⚙️ 修复连接 (点我)</span>
+                    <button onclick="toggleSettings()" class="text-white bg-zinc-800 border border-zinc-600 px-3 py-1 rounded-full text-xs hover:bg-zinc-700 animate-pulse flex items-center gap-2">
+                        <span>📡 扫描模型 (点我)</span>
                     </button>
                 </div>
             </div>
@@ -52,7 +50,7 @@
                 <div class="flex-1 relative">
                     <input type="text" id="search-input" 
                            class="w-full h-14 bg-black border border-zinc-700 rounded-lg px-6 text-lg text-white placeholder-zinc-600 outline-none transition focus:border-cyan-500"
-                           placeholder="等待连接..."
+                           placeholder="等待扫描..."
                            onkeydown="if(event.key === 'Enter') runSearch()">
                     <button onclick="runSearch()" class="absolute right-2 top-2 bottom-2 px-6 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-md transition">搜索</button>
                 </div>
@@ -65,45 +63,36 @@
         </div>
     </nav>
 
-    <div id="settings-panel" class="settings-panel fixed top-0 right-0 h-full w-[460px] bg-[#0d0d0d] border-l border-zinc-800 z-50 p-6 shadow-2xl flex flex-col gap-5 overflow-y-auto">
+    <div id="settings-panel" class="settings-panel fixed top-0 right-0 h-full w-[480px] bg-[#0d0d0d] border-l border-zinc-800 z-50 p-6 shadow-2xl flex flex-col gap-4 overflow-y-auto">
         <div class="flex justify-between items-center">
-            <h2 class="text-lg font-bold text-white">📡 API 手术室</h2>
+            <h2 class="text-lg font-bold text-white">📡 模型雷达扫描</h2>
             <button onclick="toggleSettings()" class="text-zinc-500 hover:text-white">✕</button>
         </div>
 
-        <div class="console-box" id="debug-log">
-            <div class="console-line">> System Ready.</div>
+        <div class="p-4 bg-zinc-900 rounded-lg border border-zinc-800">
+            <label class="block text-xs font-bold text-orange-400 mb-2">第1步: 确认 API Key</label>
+            <input type="text" id="api-key-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white outline-none focus:border-orange-500 font-mono" placeholder="AIzaSy...">
         </div>
 
-        <div>
-            <label class="block text-xs font-bold text-cyan-400 mb-1">API KEY (必填)</label>
-            <input type="text" id="api-key-input" class="w-full bg-[#1a1a1a] border border-zinc-700 rounded p-2 text-xs text-white outline-none focus:border-cyan-500 font-mono">
-        </div>
-
-        <div>
-            <label class="block text-xs font-bold text-green-400 mb-1">完整请求地址 (ENDPOINT)</label>
-            <p class="text-[10px] text-zinc-500 mb-2">请直接使用下方的预设按钮，不要手动修改，除非你非常确定。</p>
-            
-            <textarea id="endpoint-input" class="w-full bg-[#1a1a1a] border border-zinc-700 rounded p-2 text-[10px] text-green-300 font-mono h-20 outline-none focus:border-cyan-500"></textarea>
-            
-            <div class="grid grid-cols-2 gap-2 mt-2">
-                <button onclick="setEndpoint('flash')" class="px-2 py-2 bg-zinc-800 text-[10px] rounded hover:bg-white hover:text-black transition border border-zinc-700">
-                    ✅ 官方 Flash (推荐)
-                </button>
-                <button onclick="setEndpoint('flash-8b')" class="px-2 py-2 bg-zinc-800 text-[10px] rounded hover:bg-white hover:text-black transition border border-zinc-700">
-                    ⚡ 官方 Flash-8B (极速)
-                </button>
-                <button onclick="setEndpoint('pro')" class="px-2 py-2 bg-zinc-800 text-[10px] rounded hover:bg-white hover:text-black transition border border-zinc-700">
-                    🧠 官方 Pro (稳)
-                </button>
-                <button onclick="setEndpoint('proxy')" class="px-2 py-2 bg-zinc-800 text-[10px] rounded hover:bg-white hover:text-black transition border border-zinc-700">
-                    🌐 公益代理 (备用)
-                </button>
+        <div class="p-4 bg-zinc-900 rounded-lg border border-zinc-800 flex-1 flex flex-col">
+            <div class="flex justify-between items-center mb-2">
+                <label class="block text-xs font-bold text-green-400">第2步: 扫描可用模型</label>
+                <button onclick="scanModels()" class="px-3 py-1 bg-green-700 hover:bg-green-600 text-white text-[10px] rounded font-bold transition">🚀 开始扫描</button>
             </div>
+            
+            <div id="model-list" class="flex-1 bg-black border border-zinc-700 rounded h-64 overflow-y-auto p-2">
+                <div class="text-zinc-600 text-[10px] p-2 text-center mt-10">点击“开始扫描”查看你的账号支持哪些模型</div>
+            </div>
+            <p class="text-[9px] text-zinc-500 mt-2">* 扫描成功后，点击列表中的模型即可直接应用。</p>
         </div>
 
-        <button onclick="saveAndTest()" class="w-full py-3 bg-green-700 hover:bg-green-600 text-white rounded font-bold text-sm transition mt-auto">
-            💾 保存并立刻测试
+        <div class="p-4 bg-zinc-900 rounded-lg border border-zinc-800">
+            <label class="block text-xs font-bold text-cyan-400 mb-1">当前选中的请求地址</label>
+            <textarea id="endpoint-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-[9px] text-cyan-300 font-mono h-16 outline-none resize-none" readonly></textarea>
+        </div>
+
+        <button onclick="saveSettings()" class="w-full py-3 bg-zinc-800 hover:bg-white hover:text-black text-white rounded font-bold text-sm transition mt-auto">
+            💾 保存当前配置
         </button>
     </div>
     <div id="settings-overlay" onclick="toggleSettings()" class="fixed inset-0 bg-black/50 z-40 hidden backdrop-blur-sm"></div>
@@ -112,7 +101,7 @@
         <div id="results-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             <div class="col-span-full text-center py-20 text-zinc-700 border-2 border-dashed border-zinc-800 rounded-xl">
                 <p class="text-lg font-bold mb-2">SYSTEM READY</p>
-                <p class="text-sm">如果报错 404，请点击右上角 <span class="text-red-500">⚙️ 修复</span> 并尝试切换不同的预设按钮</p>
+                <p class="text-sm">请先点击右上角 <span class="text-orange-500">📡 扫描模型</span> 找到能用的模型</p>
             </div>
         </div>
         <div id="loader" class="hidden text-center py-10 text-cyan-500 text-xs animate-pulse">LOADING...</div>
@@ -140,103 +129,93 @@
         const TENOR_KEY = "LIVDSRZULELA";
         
         // DOM
-        const logBox = document.getElementById('debug-log');
         const apiKeyInput = document.getElementById('api-key-input');
         const endpointInput = document.getElementById('endpoint-input');
         const searchInput = document.getElementById('search-input');
         const fileInput = document.getElementById('file-input');
+        const modelListEl = document.getElementById('model-list');
 
         // 初始化
-        if(localStorage.getItem('motiflow_v16')) {
-            CONFIG = JSON.parse(localStorage.getItem('motiflow_v16'));
+        if(localStorage.getItem('motiflow_v17')) {
+            CONFIG = JSON.parse(localStorage.getItem('motiflow_v17'));
         }
         apiKeyInput.value = CONFIG.apiKey;
         endpointInput.value = CONFIG.endpoint;
-
-        function log(msg, type='normal') {
-            const el = document.createElement('div');
-            el.className = `console-line ${type === 'err' ? 'log-err' : (type === 'ok' ? 'log-ok' : (type === 'url' ? 'log-url' : ''))}`;
-            el.innerText = `> ${msg}`;
-            logBox.appendChild(el);
-            logBox.scrollTop = logBox.scrollHeight;
-        }
 
         function toggleSettings() {
             document.getElementById('settings-panel').classList.toggle('open');
             document.getElementById('settings-overlay').classList.toggle('hidden');
         }
 
-        // 核心：设置预设地址
-        function setEndpoint(type) {
-            let url = "";
-            switch(type) {
-                case 'flash':
-                    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
-                    break;
-                case 'flash-8b':
-                    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent";
-                    break;
-                case 'pro':
-                    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent";
-                    break;
-                case 'proxy':
-                    // 这是一个常用的公共反代地址格式，注意这里的路径
-                    url = "https://gemini-proxy-v1.vercel.app/v1beta/models/gemini-1.5-flash:generateContent";
-                    break;
-            }
-            endpointInput.value = url;
-            log(`已填入预设: ${type}`, 'url');
-        }
+        // --- 核心：模型雷达 ---
+        async function scanModels() {
+            const key = apiKeyInput.value.trim();
+            if(!key) return alert("请先填写 API Key");
 
-        async function saveAndTest() {
-            CONFIG.apiKey = apiKeyInput.value.trim();
-            CONFIG.endpoint = endpointInput.value.trim();
+            modelListEl.innerHTML = `<div class="text-orange-500 p-4 text-center animate-pulse">📡 正在扫描 Google AI 数据库...<br>请保持 VPN 全局模式</div>`;
             
-            // 简单校验
-            if (!CONFIG.endpoint.startsWith('http')) {
-                alert("Endpoint 地址必须以 http 或 https 开头");
-                return;
-            }
-
-            localStorage.setItem('motiflow_v16', JSON.stringify(CONFIG));
-            log("设置已保存，开始测试...", "ok");
-            await testConnection();
-        }
-
-        async function testConnection() {
-            // 构造完整请求地址
-            const fullUrl = `${CONFIG.endpoint}?key=${CONFIG.apiKey}`;
-            // 隐藏日志里的 Key
-            log(`请求: ${fullUrl.split('?')[0]}?key=******`, 'url');
+            // 使用 ListModels 接口
+            const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`;
 
             try {
-                const response = await fetch(fullUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: "Hi" }] }] })
+                const response = await fetch(listUrl);
+                
+                if(!response.ok) {
+                    const err = await response.text();
+                    modelListEl.innerHTML = `<div class="text-red-500 p-2 text-xs">扫描失败 (${response.status})<br>${err.slice(0, 100)}</div>`;
+                    return;
+                }
+
+                const data = await response.json();
+                
+                if(!data.models || data.models.length === 0) {
+                    modelListEl.innerHTML = `<div class="text-yellow-500 p-2 text-xs">没有找到可用模型。<br>请检查 Key 的权限。</div>`;
+                    return;
+                }
+
+                // 渲染列表
+                modelListEl.innerHTML = "";
+                data.models.forEach(model => {
+                    // 只显示支持 generateContent 的模型
+                    if(model.supportedGenerationMethods && model.supportedGenerationMethods.includes("generateContent")) {
+                        const div = document.createElement('div');
+                        div.className = "model-item";
+                        // 提取纯模型名，例如 models/gemini-1.5-flash -> gemini-1.5-flash
+                        const shortName = model.name.replace("models/", "");
+                        div.innerHTML = `<b>${shortName}</b><br><span class="opacity-50">${model.displayName}</span>`;
+                        
+                        div.onclick = () => selectModel(model.name);
+                        modelListEl.appendChild(div);
+                    }
                 });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    log("✅ 连接成功 (200 OK)", "ok");
-                    log("AI: " + (data.candidates?.[0]?.content?.parts?.[0]?.text || "OK"));
-                    alert("✅ 连接成功！现在可以上传图片了。");
-                    toggleSettings();
-                } else {
-                    const txt = await response.text();
-                    log(`❌ 失败: ${response.status}`, "err");
-                    log(`Server: ${txt.slice(0, 100)}`, "err");
-                    
-                    if (response.status === 404) {
-                        alert("❌ 404 错误：路径依然不对。\n请尝试点击其他的【预设按钮】，例如 Flash-8B 或 Pro。");
-                    } else if (response.status === 400) {
-                        alert("❌ 400 错误：Key 可能无效，或者 Key 和地址不匹配。");
-                    }
-                }
-            } catch (e) {
-                log(`❌ 网络层错误: ${e.message}`, "err");
-                alert("❌ 网络无法连接。请确保 VPN 已开启全局模式。");
+            } catch(e) {
+                modelListEl.innerHTML = `<div class="text-red-500 p-2 text-xs">网络错误: ${e.message}<br>请确保 VPN 开启了全局模式。</div>`;
             }
+        }
+
+        function selectModel(fullModelName) {
+            // 构造新的 Endpoint
+            // fullModelName 格式如 "models/gemini-1.5-flash"
+            // 目标格式: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent
+            const newEndpoint = `https://generativelanguage.googleapis.com/v1beta/${fullModelName}:generateContent`;
+            
+            CONFIG.endpoint = newEndpoint;
+            endpointInput.value = newEndpoint;
+            
+            // 高亮选中
+            document.querySelectorAll('.model-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            
+            alert(`✅ 已切换模型为: ${fullModelName}\n点击底部“保存”即可生效。`);
+        }
+
+        function saveSettings() {
+            CONFIG.apiKey = apiKeyInput.value.trim();
+            CONFIG.endpoint = endpointInput.value.trim();
+            localStorage.setItem('motiflow_v17', JSON.stringify(CONFIG));
+            alert("配置已保存！");
+            toggleSettings();
         }
 
         // 识图逻辑
@@ -244,11 +223,8 @@
             const file = e.target.files[0];
             if (!file) return;
 
-            searchInput.placeholder = "AI 正在连接...";
+            searchInput.placeholder = "AI 正在分析...";
             
-            // 如果面板没开，如果出错可以考虑自动打开
-            log("--- New Image Analysis ---");
-
             try {
                 const base64 = await toBase64(file);
                 const fullUrl = `${CONFIG.endpoint}?key=${CONFIG.apiKey}`;
@@ -264,26 +240,29 @@
                     })
                 });
 
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                if (!response.ok) {
+                    const txt = await response.text();
+                    throw new Error(`${response.status} - ${txt}`);
+                }
                 
                 const data = await response.json();
                 const keywords = data.candidates[0].content.parts[0].text.trim();
                 
-                log("✅ Success!", "ok");
                 searchInput.value = keywords;
                 updatePortals(keywords);
                 runSearch();
 
             } catch (err) {
-                log(`❌ Failed: ${err.message}`, "err");
-                if (!document.getElementById('settings-panel').classList.contains('open')) {
-                    toggleSettings(); // 出错自动弹窗
+                console.error(err);
+                if(err.message.includes("404")) {
+                    alert("错误 404：模型不对。\n请点击右上角【扫描模型】，从列表中选择一个真实存在的模型！");
+                    toggleSettings();
+                } else {
+                    alert(`AI 失败: ${err.message}`);
                 }
-                alert(`AI 连接失败 (${err.message})。请检查日志并尝试切换预设。`);
             }
         });
 
-        // 搜索与其他逻辑
         function updatePortals(val) {
             document.getElementById('link-huaban').href = `https://huaban.com/search/?q=${encodeURIComponent(val + " 游戏特效")}`;
             document.getElementById('link-bilibili').href = `https://search.bilibili.com/all?keyword=${encodeURIComponent(val + " Unity教程")}`;
@@ -308,7 +287,7 @@
                     document.getElementById('results-grid').innerHTML = `<div class="col-span-full text-center py-20 text-zinc-500">无 Tenor 结果。</div>`;
                 }
             } catch (e) {
-                document.getElementById('results-grid').innerHTML = `<div class="col-span-full text-center py-20 text-red-500">搜索服务连接失败。</div>`;
+                document.getElementById('results-grid').innerHTML = `<div class="col-span-full text-center py-20 text-red-500">搜索失败。</div>`;
             } finally {
                 document.getElementById('loader').classList.add('hidden');
             }
