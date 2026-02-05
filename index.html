@@ -3,23 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer">
-    <title>Motiflow VFX - Eagle Vision v26</title>
+    <title>Motiflow VFX - Visual Sort v27</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #050505; color: #e0e0e0; }
+        
         .portal-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #222; position: relative; overflow: hidden; }
         .portal-card:hover { transform: translateY(-5px); border-color: var(--accent-color); box-shadow: 0 10px 30px -10px var(--shadow-color); }
+        
         .settings-panel { transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .settings-panel.open { transform: translateX(0); }
+        
         .model-item { cursor: pointer; padding: 10px; border-bottom: 1px solid #222; font-size: 11px; color: #666; display: flex; justify-content: space-between; align-items: center; }
         .model-item:hover { background: #111; color: white; }
         .model-item.active { background: #1e3a8a; color: #93c5fd; border-left: 3px solid #3b82f6; }
         .tag-rec { background: #064e3b; color: #34d399; padding: 2px 6px; border-radius: 4px; font-size: 9px; }
+        
         .upload-active { animation: pulse-ring 2s infinite; border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
         @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
+        
         .console-box { font-family: 'Consolas', monospace; font-size: 10px; background: #000; padding: 10px; height: 120px; overflow-y: auto; color: #666; margin-top: 10px; border-top: 1px solid #222; }
-        .log-err { color: #f87171; } .log-warn { color: #facc15; } .log-suc { color: #4ade80; }
     </style>
 </head>
 <body class="min-h-screen bg-[#050505] flex flex-col overflow-x-hidden">
@@ -27,8 +31,8 @@
     <nav class="sticky top-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-md border-b border-white/5">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-amber-600 rounded flex items-center justify-center font-bold text-white">26</div>
-                <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-amber-500 font-normal">| VISION</span></span>
+                <div class="w-8 h-8 bg-cyan-600 rounded flex items-center justify-center font-bold text-white">27</div>
+                <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-cyan-500 font-normal">| VISUAL SORT</span></span>
             </div>
             
             <div class="flex items-center gap-4">
@@ -46,39 +50,43 @@
     <main class="flex-1 max-w-7xl mx-auto w-full p-6 flex flex-col gap-8">
         
         <section class="flex flex-col md:flex-row gap-6 items-stretch h-auto md:h-48">
-            <div id="drop-area" class="relative group w-full md:w-1/3 border-2 border-dashed border-zinc-800 rounded-2xl hover:border-amber-500 transition cursor-pointer flex flex-col items-center justify-center bg-zinc-900/20 py-8 md:py-0" onclick="triggerUpload()">
+            <div id="drop-area" class="relative group w-full md:w-1/3 border-2 border-dashed border-zinc-800 rounded-2xl hover:border-cyan-500 transition cursor-pointer flex flex-col items-center justify-center bg-zinc-900/20 py-8 md:py-0" onclick="triggerUpload()">
                 <input type="file" id="file-input" class="hidden" accept="image/*">
-                <img id="preview-thumb" class="hidden w-20 h-20 object-cover rounded mb-2 border border-zinc-700">
-                <div id="upload-hint">
-                    <i class="fas fa-cloud-upload-alt text-4xl mb-3 text-zinc-600 group-hover:text-amber-500 transition"></i>
-                    <p class="text-xs text-zinc-500 font-bold group-hover:text-zinc-300">点击 / 拖拽 / 粘贴</p>
+                <div id="preview-container" class="hidden flex flex-col items-center">
+                    <img id="preview-thumb" class="w-24 h-24 object-cover rounded border border-zinc-600 shadow-lg mb-2 cursor-grab active:cursor-grabbing" draggable="true">
+                    <p class="text-[9px] text-cyan-400 animate-pulse">💡 提示: 可将此图拖入 Eagle 搜索框</p>
+                </div>
+                <div id="upload-hint" class="flex flex-col items-center">
+                    <i class="fas fa-cloud-upload-alt text-4xl mb-3 text-zinc-600 group-hover:text-cyan-500 transition"></i>
+                    <p class="text-xs text-zinc-500 font-bold group-hover:text-zinc-300">点击 / 拖拽图片</p>
+                    <p class="text-[10px] text-zinc-600 mt-1">自动进行本地色彩比对</p>
                 </div>
             </div>
 
             <div class="w-full md:w-2/3 bg-black border border-zinc-800 rounded-2xl p-4 flex flex-col relative">
                 <div class="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
-                    <span class="text-xs font-bold text-amber-400"><i class="fas fa-eye"></i> 智能视觉中枢</span>
-                    <div class="flex gap-2">
-                        <div id="color-preview" class="w-4 h-4 rounded-full border border-white/20" title="检测到的主色"></div>
-                        <button onclick="copyImageToClipboard()" class="text-[10px] bg-zinc-800 hover:bg-white hover:text-black text-zinc-400 px-2 py-1 rounded border border-zinc-700 transition" title="复制图片到剪贴板，去Eagle里按Ctrl+V搜索">
-                            <i class="far fa-copy"></i> 复制图去Eagle搜
-                        </button>
+                    <span class="text-xs font-bold text-cyan-400"><i class="fas fa-palette"></i> 视觉分析中枢</span>
+                    <div class="flex gap-2 items-center">
+                        <span id="color-sample" class="w-3 h-3 rounded-full border border-white/20 hidden"></span>
+                        <span class="text-[10px] text-zinc-500" id="sort-status">等待输入...</span>
                     </div>
                 </div>
                 <div class="flex-1 flex flex-col justify-center gap-4">
                     <div class="flex items-center gap-3">
                         <span class="text-[10px] text-zinc-500 w-16 text-right font-bold">CN (花瓣)</span>
-                        <input type="text" id="cn-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-amber-500 outline-none transition" placeholder="...">
+                        <input type="text" id="cn-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-cyan-500 outline-none transition" placeholder="...">
                     </div>
                     <div class="flex items-center gap-3">
-                        <span class="text-[10px] text-zinc-500 w-16 text-right font-bold">EN (专业)</span>
-                        <input type="text" id="en-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-amber-500 outline-none transition" placeholder="...">
+                        <span class="text-[10px] text-zinc-500 w-16 text-right font-bold">EN (标签)</span>
+                        <input type="text" id="en-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-cyan-500 outline-none transition" placeholder="...">
                     </div>
                 </div>
                 <div class="mt-4 flex justify-between items-center">
-                    <span class="text-[9px] text-zinc-600 font-mono" id="search-mode-text">模式: 颜色匹配 + 简单标签</span>
-                    <button onclick="refreshLinks()" class="bg-amber-700 hover:bg-amber-600 text-white text-xs px-4 py-2 rounded font-bold shadow-lg shadow-amber-900/50 transition">
-                        <i class="fas fa-search"></i> 综合搜索
+                    <button onclick="resetAll()" class="text-[10px] text-zinc-500 hover:text-white flex items-center gap-1">
+                        <i class="fas fa-trash"></i> 清空
+                    </button>
+                    <button onclick="refreshLinks()" class="bg-cyan-700 hover:bg-cyan-600 text-white text-xs px-4 py-2 rounded font-bold shadow-lg shadow-cyan-900/50 transition">
+                        <i class="fas fa-sync-alt"></i> 重新排序
                     </button>
                 </div>
             </div>
@@ -107,11 +115,11 @@
 
         <section class="border-t border-zinc-900 pt-6 transition-all duration-300">
             <h2 class="text-xs font-bold text-zinc-500 mb-4 flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> 本地 Eagle (按颜色+标签匹配)
+                <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> 本地 Eagle (按颜色智能排序)
             </h2>
             <div id="results-grid" class="grid grid-cols-2 md:grid-cols-6 gap-4 min-h-[100px]">
                 <div class="col-span-full text-center py-10 text-zinc-700 text-xs">
-                    等待上传...
+                    等待图片上传...
                 </div>
             </div>
         </section>
@@ -130,12 +138,12 @@
         <div class="flex-1 flex flex-col min-h-0">
             <div class="flex justify-between items-center mb-2">
                 <label class="block text-xs font-bold text-zinc-500">模型列表</label>
-                <button onclick="scanModels()" class="text-[10px] text-amber-400 hover:text-amber-300">刷新</button>
+                <button onclick="scanModels()" class="text-[10px] text-cyan-400 hover:text-cyan-300">刷新</button>
             </div>
             <div id="model-list" class="flex-1 bg-zinc-900 border border-zinc-700 rounded overflow-y-auto"></div>
         </div>
         <div class="console-box" id="debug-log">Log initialized.</div>
-        <button onclick="saveSettings()" class="w-full py-3 bg-amber-700 hover:bg-amber-600 text-white rounded text-sm font-bold">保存配置</button>
+        <button onclick="saveSettings()" class="w-full py-3 bg-cyan-700 hover:bg-cyan-600 text-white rounded text-sm font-bold">保存配置</button>
     </div>
     <div id="settings-overlay" onclick="toggleSettings()" class="fixed inset-0 bg-black/50 z-40 hidden backdrop-blur-sm"></div>
 
@@ -147,12 +155,12 @@
             apiKey: NEW_KEY,
             endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
         };
-        let currentFile = null;
-        let dominantColor = null; // 存储提取的颜色
+        
+        let targetColorRGB = null; // 存储上传图片的颜色
 
         function init() {
-            if(localStorage.getItem('motiflow_v26')) {
-                const saved = JSON.parse(localStorage.getItem('motiflow_v26'));
+            if(localStorage.getItem('motiflow_v27')) {
+                const saved = JSON.parse(localStorage.getItem('motiflow_v27'));
                 if(saved.endpoint) CONFIG.endpoint = saved.endpoint;
             }
             CONFIG.apiKey = NEW_KEY;
@@ -180,27 +188,46 @@
             document.getElementById('settings-overlay').classList.toggle('hidden');
         }
 
-        function log(msg, type='info') {
+        function log(msg) {
             const box = document.getElementById('debug-log');
-            const cls = type === 'err' ? 'log-err' : (type === 'suc' ? 'log-suc' : 'log-warn');
-            box.innerHTML += `<div class="${cls}">> ${msg}</div>`;
+            box.innerText += `\n> ${msg}`;
             box.scrollTop = box.scrollHeight;
         }
 
-        // --- 核心：颜色提取逻辑 ---
+        // --- 核心：提取颜色 RGB ---
         function extractColor(imgElement) {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = 1;
             canvas.height = 1;
-            // 绘制 1x1 像素来获取平均色
             ctx.drawImage(imgElement, 0, 0, 1, 1);
             const p = ctx.getImageData(0, 0, 1, 1).data;
-            // 转 Hex
-            const hex = "#" + ((1 << 24) + (p[0] << 16) + (p[1] << 8) + p[2]).toString(16).slice(1);
-            dominantColor = hex;
-            document.getElementById('color-preview').style.backgroundColor = hex;
-            return hex;
+            
+            targetColorRGB = { r: p[0], g: p[1], b: p[2] };
+            
+            // 显示颜色状态
+            document.getElementById('color-sample').style.backgroundColor = `rgb(${p[0]},${p[1]},${p[2]})`;
+            document.getElementById('color-sample').classList.remove('hidden');
+            document.getElementById('sort-status').innerText = `提取色值: R${p[0]} G${p[1]} B${p[2]}`;
+        }
+
+        // --- 颜色距离计算 (Euclidean) ---
+        function getColorDistance(rgb1, rgb2) {
+            return Math.sqrt(
+                Math.pow(rgb1.r - rgb2.r, 2) +
+                Math.pow(rgb1.g - rgb2.g, 2) +
+                Math.pow(rgb1.b - rgb2.b, 2)
+            );
+        }
+
+        // Hex 转 RGB
+        function hexToRgb(hex) {
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
         }
 
         // --- 拖拽与上传 ---
@@ -230,13 +257,11 @@
         });
 
         async function handleFiles(file) {
-            currentFile = file;
-            
-            // 预览图片
+            // UI 切换：显示预览图
             const url = URL.createObjectURL(file);
             const img = document.getElementById('preview-thumb');
             img.src = url;
-            img.classList.remove('hidden');
+            document.getElementById('preview-container').classList.remove('hidden');
             document.getElementById('upload-hint').classList.add('hidden');
             
             // 提取颜色
@@ -244,13 +269,14 @@
 
             document.getElementById('cn-keywords').placeholder = "分析中...";
             document.getElementById('en-keywords').placeholder = "Analyzing...";
-            document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-amber-500 animate-pulse text-xs">AI 识别内容 + 提取主色调...</div>';
+            document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-cyan-500 animate-pulse text-xs">AI 识别 + 本地比对中...</div>';
 
             try {
                 const base64 = await toBase64(file);
-                // Prompt: 只要简单的标签，不要复杂的句子，方便 Eagle 搜索
-                const prompt = `Identify this Game VFX. Output ONLY a JSON.
-{"cn": "Simple Chinese tags for Huaban (e.g. 刀光, 冰霜)", "en": "One simple keyword for local search (e.g. Slash, Ice, Fire, Explosion)"}
+                const prompt = `Identify the Game VFX style and element.
+Output ONLY a JSON object. No markdown.
+Structure: {"cn": "Chinese Keywords for Huaban", "en": "English Keywords for Eagle (Simple)"}
+Example: {"cn": "Unity 刀光", "en": "Slash"}
 `;
                 
                 const res = await fetch(`${CONFIG.endpoint}?key=${CONFIG.apiKey}`, {
@@ -264,30 +290,29 @@
 
                 if(!res.ok) throw new Error(`API Error ${res.status}`);
                 const raw = await res.text();
-                let jsonStr = raw.replace(/```json/g,'').replace(/```/g,'').trim();
                 let result = {};
-                try { result = JSON.parse(jsonStr); } catch(e) { /* fallback */ }
-                
-                // 深度解析
-                if(result.candidates) {
-                    const txt = result.candidates[0].content.parts[0].text;
-                    try { result = JSON.parse(txt.replace(/```json/g,'').replace(/```/g,'').trim()); } catch(e) {}
-                }
+                try {
+                    let jsonStr = raw.replace(/```json/g,'').replace(/```/g,'').trim();
+                    result = JSON.parse(jsonStr);
+                    if(result.candidates) {
+                        const txt = result.candidates[0].content.parts[0].text;
+                        result = JSON.parse(txt.replace(/```json/g,'').replace(/```/g,'').trim());
+                    }
+                } catch(e) { result = {cn: "特效", en: "VFX"}; }
 
-                document.getElementById('cn-keywords').value = result.cn || "特效";
+                document.getElementById('cn-keywords').value = result.cn || "游戏特效";
                 document.getElementById('en-keywords').value = result.en || "VFX";
                 
                 refreshLinks(result.en);
 
             } catch(e) {
-                log(e.message, 'err');
-                document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center text-red-500">分析失败</div>';
+                log(e.message);
+                document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center text-red-500">分析失败，请检查设置</div>';
             } finally {
                 fileInput.value = '';
             }
         }
 
-        // --- 搜索逻辑 (核心：颜色+关键词) ---
         function refreshLinks(keywordOverride) {
             const cn = document.getElementById('cn-keywords').value.trim();
             const en = document.getElementById('en-keywords').value.trim();
@@ -298,69 +323,80 @@
             document.getElementById('link-artstation').href = `https://www.artstation.com/search?sort_by=relevance&query=${encodeURIComponent(en)}`;
             document.getElementById('link-bilibili').href = `https://search.bilibili.com/all?keyword=${encodeURIComponent(cn + " 教程")}`;
 
-            // Eagle 混合搜索
+            // Eagle 搜索
             searchEagle(query);
         }
 
         async function searchEagle(keyword) {
             const grid = document.getElementById('results-grid');
-            grid.innerHTML = '<div class="col-span-full text-center py-10 text-zinc-500 text-xs">搜索本地库...</div>';
             
             try {
-                // 策略：同时请求 API，看是否有颜色参数
-                let apiUrl = `${EAGLE_API_URL}/api/item/list?keyword=${encodeURIComponent(keyword)}&limit=30`;
-                
-                // 如果有提取到颜色，我们可以在这里做一些扩展（Eagle API 目前主要支持 keyword，颜色搜索需要特殊参数，这里暂时只用 keyword，颜色做辅助展示）
-                // Eagle 的 color 参数通常需要在 URL 后面加 &ext=color... 比较复杂，暂用 Keyword 保证命中率
-                
+                // 1. 获取更多结果以进行排序 (例如 100 个)
+                let apiUrl = `${EAGLE_API_URL}/api/item/list?keyword=${encodeURIComponent(keyword)}&limit=80`;
                 const res = await fetch(apiUrl);
                 const json = await res.json();
                 
                 if(json.data && json.data.length > 0) {
-                    grid.innerHTML = json.data.map(item => {
+                    let items = json.data;
+
+                    // 2. 如果提取到了颜色，进行视觉排序
+                    if (targetColorRGB) {
+                        items.forEach(item => {
+                            // Eagle 返回 palette 数组，取第一个作为主色
+                            if (item.palettes && item.palettes.length > 0) {
+                                const itemRgb = hexToRgb("#" + item.palettes[0].color); // Eagle 返回的是不带#的hex
+                                item.colorDist = itemRgb ? getColorDistance(targetColorRGB, itemRgb) : 9999;
+                            } else {
+                                item.colorDist = 9999; // 没有颜色的排后面
+                            }
+                        });
+                        
+                        // 升序排列：距离越小越靠前
+                        items.sort((a, b) => a.colorDist - b.colorDist);
+                        document.getElementById('sort-status').innerText = `已按颜色近似度排序 (${items.length}个)`;
+                    }
+
+                    // 3. 渲染
+                    grid.innerHTML = items.slice(0, 20).map(item => {
                         const thumbUrl = `${EAGLE_API_URL}/api/item/thumbnail?id=${item.id}`;
+                        // 显示颜色条作为 debug
+                        const colorBar = item.palettes && item.palettes[0] ? 
+                            `<div class="h-1 w-full" style="background:#${item.palettes[0].color}"></div>` : '';
+                            
                         return `
-                        <div class="aspect-square bg-zinc-900 rounded overflow-hidden cursor-pointer opacity-90 hover:opacity-100 transition border border-zinc-800 hover:border-amber-500 relative group" title="${item.name}">
-                            <img src="${thumbUrl}" class="w-full h-full object-cover">
+                        <div class="bg-zinc-900 rounded overflow-hidden cursor-pointer opacity-90 hover:opacity-100 transition border border-zinc-800 hover:border-cyan-500 relative group" onclick="window.open('eagle://item/${item.id}')">
+                            <div class="aspect-square relative">
+                                <img src="${thumbUrl}" class="w-full h-full object-cover">
+                            </div>
+                            ${colorBar}
+                            <div class="p-1 text-[9px] text-zinc-400 truncate">${item.name}</div>
                         </div>
                     `}).join('');
                 } else {
-                    grid.innerHTML = '<div class="col-span-full text-center py-10 text-zinc-600 text-xs">本地库未找到相关文件<br>建议使用上方“复制图去Eagle搜”按钮</div>';
+                    grid.innerHTML = '<div class="col-span-full text-center py-10 text-zinc-600 text-xs">Eagle 库中未找到相关标签素材</div>';
                 }
             } catch(e) {
                 grid.innerHTML = `<div class="col-span-full text-center py-10 text-red-500 text-xs">Eagle 连接失败</div>`;
             }
         }
 
-        // --- 辅助功能：复制图片 ---
-        async function copyImageToClipboard() {
-            if (!currentFile) return alert("请先上传图片");
-            try {
-                // 需要把 File 转为 Blob (image/png) 才能写入剪贴板
-                const clipboardItem = new ClipboardItem({ [currentFile.type]: currentFile });
-                await navigator.clipboard.write([clipboardItem]);
-                alert("✅ 图片已复制！\n\n现在请去 Eagle 软件，按下 'Ctrl + V' 或点击搜索栏的相机图标，即可进行【以图搜图】。");
-            } catch (err) {
-                alert("复制失败，请手动在本地截图");
-            }
-        }
-
         function resetAll() {
             document.getElementById('cn-keywords').value = "";
             document.getElementById('en-keywords').value = "";
-            document.getElementById('preview-thumb').classList.add('hidden');
+            document.getElementById('preview-container').classList.add('hidden');
             document.getElementById('upload-hint').classList.remove('hidden');
             document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-zinc-700 text-xs">等待上传...</div>';
-            currentFile = null;
+            targetColorRGB = null;
+            document.getElementById('color-sample').classList.add('hidden');
+            document.getElementById('sort-status').innerText = "等待输入...";
         }
 
         function toBase64(file) {
             return new Promise((r) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => r(reader.result); });
         }
 
-        // 模型扫描
         async function scanModels(silent) {
-            // (复用之前的逻辑，略微简化)
+            // 复用之前的逻辑
             try {
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${CONFIG.apiKey}`);
                 const data = await res.json();
@@ -380,13 +416,13 @@
                         list.appendChild(div);
                     }
                 });
-            } catch(e) { if(!silent) log(e.message, 'err'); }
+            } catch(e) { if(!silent) log(e.message); }
         }
 
         function saveSettings() {
-            localStorage.setItem('motiflow_v26', JSON.stringify(CONFIG));
+            localStorage.setItem('motiflow_v27', JSON.stringify(CONFIG));
+            alert("已保存");
             toggleSettings();
-            scanModels(true);
         }
 
         init();
