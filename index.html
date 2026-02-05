@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer">
-    <title>Motiflow VFX - 模型雷达 v17</title>
+    <title>Motiflow VFX - 万能适配版 v18</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #050505; color: #e0e0e0; }
@@ -16,10 +16,17 @@
         .settings-panel { transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .settings-panel.open { transform: translateX(0); }
         
-        /* 扫描结果样式 */
-        .model-item { cursor: pointer; padding: 8px; border-bottom: 1px solid #222; font-family: monospace; font-size: 11px; color: #aaa; transition: all 0.2s; }
+        /* 列表样式 */
+        .model-item { cursor: pointer; padding: 10px; border-bottom: 1px solid #222; font-family: monospace; font-size: 11px; color: #aaa; transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; }
         .model-item:hover { background: #111; color: #fff; }
-        .model-item.active { background: #064e3b; color: #34d399; border-left: 3px solid #34d399; }
+        .model-item.active { background: #1e3a8a; color: #93c5fd; border-left: 3px solid #60a5fa; }
+        .tag-vision { background: #065f46; color: #34d399; padding: 1px 4px; border-radius: 3px; font-size: 9px; margin-left: 5px; }
+        
+        /* 终端日志 */
+        .console-box { font-family: 'Consolas', monospace; font-size: 10px; background: #000; border: 1px solid #333; padding: 10px; height: 120px; overflow-y: auto; color: #ccc; margin-bottom: 10px; white-space: pre-wrap; }
+        .log-err { color: #f87171; }
+        .log-succ { color: #4ade80; }
+        .log-warn { color: #facc15; }
     </style>
 </head>
 <body class="min-h-screen bg-[#050505] flex flex-col overflow-x-hidden">
@@ -28,12 +35,12 @@
         <div class="max-w-[1800px] mx-auto px-6 py-4">
             <div class="flex justify-between items-center mb-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-orange-600 rounded flex items-center justify-center font-bold text-black shadow-[0_0_15px_rgba(234,88,12,0.5)]">17</div>
-                    <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-orange-500 font-normal">| SCANNER</span></span>
+                    <div class="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center font-bold text-white shadow-[0_0_15px_rgba(79,70,229,0.5)]">18</div>
+                    <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-indigo-500 font-normal">| ADAPTER</span></span>
                 </div>
                 <div class="flex items-center gap-4">
                     <button onclick="toggleSettings()" class="text-white bg-zinc-800 border border-zinc-600 px-3 py-1 rounded-full text-xs hover:bg-zinc-700 animate-pulse flex items-center gap-2">
-                        <span>📡 扫描模型 (点我)</span>
+                        <span>📡 模型控制台 (点我)</span>
                     </button>
                 </div>
             </div>
@@ -63,36 +70,39 @@
         </div>
     </nav>
 
-    <div id="settings-panel" class="settings-panel fixed top-0 right-0 h-full w-[480px] bg-[#0d0d0d] border-l border-zinc-800 z-50 p-6 shadow-2xl flex flex-col gap-4 overflow-y-auto">
+    <div id="settings-panel" class="settings-panel fixed top-0 right-0 h-full w-[500px] bg-[#0d0d0d] border-l border-zinc-800 z-50 p-6 shadow-2xl flex flex-col gap-4 overflow-y-auto">
         <div class="flex justify-between items-center">
-            <h2 class="text-lg font-bold text-white">📡 模型雷达扫描</h2>
+            <h2 class="text-lg font-bold text-white">📡 模型适配器</h2>
             <button onclick="toggleSettings()" class="text-zinc-500 hover:text-white">✕</button>
         </div>
 
-        <div class="p-4 bg-zinc-900 rounded-lg border border-zinc-800">
-            <label class="block text-xs font-bold text-orange-400 mb-2">第1步: 确认 API Key</label>
-            <input type="text" id="api-key-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white outline-none focus:border-orange-500 font-mono" placeholder="AIzaSy...">
+        <div class="console-box" id="debug-log">
+            <div class="text-zinc-500">> Ready. Logs will appear here.</div>
         </div>
 
-        <div class="p-4 bg-zinc-900 rounded-lg border border-zinc-800 flex-1 flex flex-col">
+        <div class="p-4 bg-zinc-900 rounded-lg border border-zinc-800">
+            <label class="block text-xs font-bold text-indigo-400 mb-2">1. API Key</label>
+            <input type="text" id="api-key-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white outline-none focus:border-indigo-500 font-mono" placeholder="AIzaSy...">
+        </div>
+
+        <div class="p-4 bg-zinc-900 rounded-lg border border-zinc-800 flex-1 flex flex-col min-h-[300px]">
             <div class="flex justify-between items-center mb-2">
-                <label class="block text-xs font-bold text-green-400">第2步: 扫描可用模型</label>
-                <button onclick="scanModels()" class="px-3 py-1 bg-green-700 hover:bg-green-600 text-white text-[10px] rounded font-bold transition">🚀 开始扫描</button>
+                <label class="block text-xs font-bold text-green-400">2. 选择模型</label>
+                <button onclick="scanModels()" class="px-3 py-1 bg-green-700 hover:bg-green-600 text-white text-[10px] rounded font-bold transition">🔄 重新扫描</button>
             </div>
             
-            <div id="model-list" class="flex-1 bg-black border border-zinc-700 rounded h-64 overflow-y-auto p-2">
-                <div class="text-zinc-600 text-[10px] p-2 text-center mt-10">点击“开始扫描”查看你的账号支持哪些模型</div>
+            <div id="model-list" class="flex-1 bg-black border border-zinc-700 rounded overflow-y-auto p-2">
+                <div class="text-zinc-600 text-[10px] p-4 text-center">点击右上角“重新扫描”获取列表</div>
             </div>
-            <p class="text-[9px] text-zinc-500 mt-2">* 扫描成功后，点击列表中的模型即可直接应用。</p>
         </div>
 
-        <div class="p-4 bg-zinc-900 rounded-lg border border-zinc-800">
-            <label class="block text-xs font-bold text-cyan-400 mb-1">当前选中的请求地址</label>
-            <textarea id="endpoint-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-[9px] text-cyan-300 font-mono h-16 outline-none resize-none" readonly></textarea>
+        <div class="p-3 bg-zinc-900 rounded border border-zinc-800">
+            <label class="block text-[10px] font-bold text-zinc-500 mb-1">当前 Endpoint (自动生成)</label>
+            <input type="text" id="endpoint-input" class="w-full bg-black border border-zinc-700 rounded p-1 text-[10px] text-zinc-400 font-mono outline-none" readonly>
         </div>
 
         <button onclick="saveSettings()" class="w-full py-3 bg-zinc-800 hover:bg-white hover:text-black text-white rounded font-bold text-sm transition mt-auto">
-            💾 保存当前配置
+            💾 保存配置
         </button>
     </div>
     <div id="settings-overlay" onclick="toggleSettings()" class="fixed inset-0 bg-black/50 z-40 hidden backdrop-blur-sm"></div>
@@ -101,10 +111,12 @@
         <div id="results-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             <div class="col-span-full text-center py-20 text-zinc-700 border-2 border-dashed border-zinc-800 rounded-xl">
                 <p class="text-lg font-bold mb-2">SYSTEM READY</p>
-                <p class="text-sm">请先点击右上角 <span class="text-orange-500">📡 扫描模型</span> 找到能用的模型</p>
+                <p class="text-sm">请先 <span class="text-indigo-500">扫描并选择</span> 一个支持图片输入 (Vision) 的模型</p>
             </div>
         </div>
-        <div id="loader" class="hidden text-center py-10 text-cyan-500 text-xs animate-pulse">LOADING...</div>
+        <div id="loader" class="hidden text-center py-10 text-cyan-500 text-xs animate-pulse">
+            AI IS ANALYZING... <br> <span class="text-[9px] text-zinc-500">(如果不动了，请看右侧控制台报错)</span>
+        </div>
     </main>
 
     <div id="preview-modal" class="modal" onclick="closeModal()">
@@ -124,11 +136,12 @@
         // 默认配置
         let CONFIG = {
             apiKey: "AIzaSyB9ww1axSGsO4iYUt9UaOOJiBAuoa0wYOQ",
-            endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+            endpoint: ""
         };
         const TENOR_KEY = "LIVDSRZULELA";
         
         // DOM
+        const logBox = document.getElementById('debug-log');
         const apiKeyInput = document.getElementById('api-key-input');
         const endpointInput = document.getElementById('endpoint-input');
         const searchInput = document.getElementById('search-input');
@@ -136,98 +149,110 @@
         const modelListEl = document.getElementById('model-list');
 
         // 初始化
-        if(localStorage.getItem('motiflow_v17')) {
-            CONFIG = JSON.parse(localStorage.getItem('motiflow_v17'));
+        if(localStorage.getItem('motiflow_v18')) {
+            CONFIG = JSON.parse(localStorage.getItem('motiflow_v18'));
         }
         apiKeyInput.value = CONFIG.apiKey;
         endpointInput.value = CONFIG.endpoint;
+
+        function log(msg, type='normal') {
+            const div = document.createElement('div');
+            div.className = type === 'err' ? 'log-err' : (type === 'succ' ? 'log-succ' : 'log-warn');
+            div.innerText = `> ${msg}`;
+            logBox.appendChild(div);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
 
         function toggleSettings() {
             document.getElementById('settings-panel').classList.toggle('open');
             document.getElementById('settings-overlay').classList.toggle('hidden');
         }
 
-        // --- 核心：模型雷达 ---
+        // --- 核心：智能扫描 ---
         async function scanModels() {
             const key = apiKeyInput.value.trim();
             if(!key) return alert("请先填写 API Key");
 
-            modelListEl.innerHTML = `<div class="text-orange-500 p-4 text-center animate-pulse">📡 正在扫描 Google AI 数据库...<br>请保持 VPN 全局模式</div>`;
+            log("Scanning models...", "warn");
+            modelListEl.innerHTML = `<div class="text-zinc-500 p-4 text-center animate-pulse">Scanning...</div>`;
             
-            // 使用 ListModels 接口
-            const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`;
-
             try {
-                const response = await fetch(listUrl);
-                
-                if(!response.ok) {
-                    const err = await response.text();
-                    modelListEl.innerHTML = `<div class="text-red-500 p-2 text-xs">扫描失败 (${response.status})<br>${err.slice(0, 100)}</div>`;
-                    return;
-                }
-
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
                 const data = await response.json();
                 
-                if(!data.models || data.models.length === 0) {
-                    modelListEl.innerHTML = `<div class="text-yellow-500 p-2 text-xs">没有找到可用模型。<br>请检查 Key 的权限。</div>`;
-                    return;
-                }
+                if(data.error) throw new Error(data.error.message);
+                if(!data.models) throw new Error("No models found");
 
-                // 渲染列表
                 modelListEl.innerHTML = "";
+                
+                // 推荐模型列表 (支持图片的)
+                const recommended = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro-vision', 'gemini-2.0-flash'];
+
                 data.models.forEach(model => {
-                    // 只显示支持 generateContent 的模型
-                    if(model.supportedGenerationMethods && model.supportedGenerationMethods.includes("generateContent")) {
+                    const shortName = model.name.replace("models/", "");
+                    // 只有 generateContent 的模型才有用
+                    if(model.supportedGenerationMethods?.includes("generateContent")) {
                         const div = document.createElement('div');
                         div.className = "model-item";
-                        // 提取纯模型名，例如 models/gemini-1.5-flash -> gemini-1.5-flash
-                        const shortName = model.name.replace("models/", "");
-                        div.innerHTML = `<b>${shortName}</b><br><span class="opacity-50">${model.displayName}</span>`;
                         
+                        // 智能判断是否支持 Vision (简单的关键词匹配)
+                        const isVision = recommended.some(r => shortName.includes(r)) || shortName.includes("vision");
+                        const isRecommended = recommended.some(r => shortName.includes(r));
+
+                        let html = `<div><span class="font-bold text-white">${shortName}</span>`;
+                        if(isVision) html += `<span class="tag-vision">VISION</span>`;
+                        if(shortName.includes("gemma")) html += `<span class="text-[9px] text-red-500 ml-2">(Text Only)</span>`;
+                        html += `<div class="opacity-50 text-[9px] truncate">${model.displayName}</div></div>`;
+                        
+                        if (isRecommended) div.style.backgroundColor = "#1a2e05"; // 稍微高亮推荐的
+
+                        div.innerHTML = html;
                         div.onclick = () => selectModel(model.name);
                         modelListEl.appendChild(div);
                     }
                 });
+                log(`Found ${data.models.length} models.`, "succ");
 
             } catch(e) {
-                modelListEl.innerHTML = `<div class="text-red-500 p-2 text-xs">网络错误: ${e.message}<br>请确保 VPN 开启了全局模式。</div>`;
+                log(`Scan failed: ${e.message}`, "err");
+                modelListEl.innerHTML = `<div class="text-red-500 p-2 text-xs">Scan Failed: ${e.message}</div>`;
             }
         }
 
-        function selectModel(fullModelName) {
-            // 构造新的 Endpoint
-            // fullModelName 格式如 "models/gemini-1.5-flash"
-            // 目标格式: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent
-            const newEndpoint = `https://generativelanguage.googleapis.com/v1beta/${fullModelName}:generateContent`;
+        function selectModel(fullName) {
+            // 自动构造标准 URL
+            const url = `https://generativelanguage.googleapis.com/v1beta/${fullName}:generateContent`;
+            CONFIG.endpoint = url;
+            endpointInput.value = url;
             
-            CONFIG.endpoint = newEndpoint;
-            endpointInput.value = newEndpoint;
-            
-            // 高亮选中
             document.querySelectorAll('.model-item').forEach(el => el.classList.remove('active'));
             event.currentTarget.classList.add('active');
-            
-            alert(`✅ 已切换模型为: ${fullModelName}\n点击底部“保存”即可生效。`);
+            log(`Selected: ${fullName}`, "succ");
         }
 
         function saveSettings() {
             CONFIG.apiKey = apiKeyInput.value.trim();
             CONFIG.endpoint = endpointInput.value.trim();
-            localStorage.setItem('motiflow_v17', JSON.stringify(CONFIG));
-            alert("配置已保存！");
+            localStorage.setItem('motiflow_v18', JSON.stringify(CONFIG));
+            alert("已保存！");
             toggleSettings();
         }
 
-        // 识图逻辑
+        // --- 核心：万能识图逻辑 ---
         fileInput.addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
-
-            searchInput.placeholder = "AI 正在分析...";
             
+            // 自动打开日志面板
+            if(!document.getElementById('settings-panel').classList.contains('open')) toggleSettings();
+            
+            searchInput.placeholder = "Processing...";
+            log(`--- Starting Analysis ---`, "warn");
+
             try {
                 const base64 = await toBase64(file);
                 const fullUrl = `${CONFIG.endpoint}?key=${CONFIG.apiKey}`;
+                log(`Endpoint: ${CONFIG.endpoint.split('models/')[1] || 'custom'}`);
 
                 const response = await fetch(fullUrl, {
                     method: 'POST',
@@ -240,29 +265,48 @@
                     })
                 });
 
+                // 打印原始文本，防止 JSON 解析挂了没人知道
+                const rawText = await response.text();
+                
                 if (!response.ok) {
-                    const txt = await response.text();
-                    throw new Error(`${response.status} - ${txt}`);
+                    log(`API Error (${response.status}): ${rawText}`, "err");
+                    throw new Error(rawText);
                 }
-                
-                const data = await response.json();
-                const keywords = data.candidates[0].content.parts[0].text.trim();
-                
+
+                // 尝试解析 JSON
+                let keywords = "";
+                try {
+                    const data = JSON.parse(rawText);
+                    // 暴力查找 text 字段，因为不同模型结构可能不同
+                    keywords = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    
+                    if (!keywords) {
+                        log("JSON parsed but no text found. Full response:", "warn");
+                        log(rawText.slice(0, 200) + "...", "warn");
+                        throw new Error("Response structure mismatch");
+                    }
+                } catch (parseErr) {
+                    log("JSON Parse Error: " + parseErr.message, "err");
+                    throw parseErr;
+                }
+
+                // 成功！
+                keywords = keywords.trim();
+                log(`Result: ${keywords}`, "succ");
                 searchInput.value = keywords;
                 updatePortals(keywords);
                 runSearch();
+                
+                // 1秒后自动收起面板
+                setTimeout(toggleSettings, 1000);
 
             } catch (err) {
-                console.error(err);
-                if(err.message.includes("404")) {
-                    alert("错误 404：模型不对。\n请点击右上角【扫描模型】，从列表中选择一个真实存在的模型！");
-                    toggleSettings();
-                } else {
-                    alert(`AI 失败: ${err.message}`);
-                }
+                log(`FATAL: ${err.message}`, "err");
+                alert("失败。请查看右侧控制台的详细报错。");
             }
         });
 
+        // 搜索与其他逻辑
         function updatePortals(val) {
             document.getElementById('link-huaban').href = `https://huaban.com/search/?q=${encodeURIComponent(val + " 游戏特效")}`;
             document.getElementById('link-bilibili').href = `https://search.bilibili.com/all?keyword=${encodeURIComponent(val + " Unity教程")}`;
