@@ -3,24 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer">
-    <title>Motiflow VFX - v32 SafeVault</title>
+    <title>Motiflow VFX - v34 Force Render</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #050505; color: #e0e0e0; }
+        
         .portal-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #222; position: relative; overflow: hidden; }
         .portal-card:hover { transform: translateY(-5px); border-color: var(--accent-color); box-shadow: 0 10px 30px -10px var(--shadow-color); }
         .settings-panel { transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .settings-panel.open { transform: translateX(0); }
+        
+        .upload-active { animation: pulse-ring 2s infinite; border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
+        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
+        
         .model-item { cursor: pointer; padding: 10px; border-bottom: 1px solid #222; font-size: 11px; color: #666; display: flex; justify-content: space-between; align-items: center; }
         .model-item:hover { background: #111; color: white; }
         .model-item.active { background: #1e3a8a; color: #93c5fd; border-left: 3px solid #3b82f6; }
-        .tag-rec { background: #064e3b; color: #34d399; padding: 2px 6px; border-radius: 4px; font-size: 9px; }
-        .upload-active { animation: pulse-ring 2s infinite; border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
-        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
+        
         .console-box { font-family: 'Consolas', monospace; font-size: 10px; background: #000; padding: 10px; height: 120px; overflow-y: auto; color: #666; margin-top: 10px; border-top: 1px solid #222; }
         .log-err { color: #f87171; border-left: 2px solid #f87171; padding-left: 5px; } 
         .log-suc { color: #4ade80; border-left: 2px solid #4ade80; padding-left: 5px; }
+        
+        /* 强制图片容器样式 */
+        .eagle-img { width: 100%; height: 100%; object-fit: cover; background: #111; transition: opacity 0.3s; opacity: 0; }
+        .eagle-img.loaded { opacity: 1; }
     </style>
 </head>
 <body class="min-h-screen bg-[#050505] flex flex-col overflow-x-hidden">
@@ -28,15 +35,15 @@
     <nav class="sticky top-0 z-40 bg-[#0a0a0a]/90 backdrop-blur-md border-b border-white/5">
         <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-emerald-600 rounded flex items-center justify-center font-bold text-white">32</div>
-                <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-emerald-500 font-normal">| SAFE</span></span>
+                <div class="w-8 h-8 bg-pink-600 rounded flex items-center justify-center font-bold text-white">34</div>
+                <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-pink-500 font-normal">| FORCE</span></span>
             </div>
             
             <div class="flex items-center gap-4">
                 <div class="hidden md:flex items-center gap-2 text-[10px]">
                     <div class="bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800 flex items-center gap-2">
                         <span id="ai-status-dot" class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span>
-                        <span id="current-model-name" class="text-zinc-300 font-mono">Connecting...</span>
+                        <span id="current-model-name" class="text-zinc-300 font-mono">扫描中...</span>
                     </div>
                     <div class="bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800 flex items-center gap-2">
                         <span id="eagle-status-dot" class="w-2 h-2 rounded-full bg-red-500"></span>
@@ -53,22 +60,24 @@
     <main class="flex-1 max-w-7xl mx-auto w-full p-6 flex flex-col gap-8">
         
         <section class="flex flex-col md:flex-row gap-6 items-stretch h-auto md:h-52">
-            <div id="drop-area" class="relative group w-full md:w-1/3 border-2 border-dashed border-zinc-800 rounded-2xl hover:border-emerald-500 transition cursor-pointer flex flex-col items-center justify-center bg-zinc-900/20 py-8 md:py-0" onclick="triggerUpload()">
+            <div id="drop-area" class="relative group w-full md:w-1/3 border-2 border-dashed border-zinc-800 rounded-2xl hover:border-pink-500 transition cursor-pointer flex flex-col items-center justify-center bg-zinc-900/20 py-8 md:py-0" onclick="triggerUpload()">
                 <input type="file" id="file-input" class="hidden" accept="image/*">
                 <div id="upload-hint" class="text-center">
-                    <i class="fas fa-cloud-upload-alt text-4xl mb-3 text-zinc-600 group-hover:text-emerald-500 transition"></i>
+                    <i class="fas fa-cloud-upload-alt text-4xl mb-3 text-zinc-600 group-hover:text-pink-500 transition"></i>
                     <p class="text-xs text-zinc-500 font-bold group-hover:text-zinc-300">点击 / 拖拽 / 粘贴</p>
-                    <p class="text-[10px] text-zinc-600 mt-1">本地密钥存储，防封号</p>
+                    <p class="text-[10px] text-zinc-600 mt-1">v34 强制渲染引擎</p>
                 </div>
-                <img id="preview-thumb" class="hidden w-32 h-32 object-contain rounded shadow-lg z-10 cursor-grab active:cursor-grabbing border border-zinc-700 bg-black" draggable="true" title="按住我，拖进 Eagle 搜索框！">
+                <img id="preview-thumb" class="hidden w-32 h-32 object-contain rounded shadow-lg z-10 cursor-grab active:cursor-grabbing border border-zinc-700 bg-black" draggable="true" title="按住拖拽至 Eagle">
             </div>
 
             <div class="w-full md:w-2/3 bg-black border border-zinc-800 rounded-2xl p-4 flex flex-col relative">
                 <div class="flex justify-between items-center mb-4 border-b border-zinc-800 pb-2">
-                    <span class="text-xs font-bold text-emerald-400"><i class="fas fa-robot"></i> AI ANALYSIS HUB</span>
+                    <span class="text-xs font-bold text-pink-400"><i class="fas fa-magic"></i> AI ANALYSIS HUB</span>
+                    
                     <div id="color-info" class="hidden flex items-center gap-2">
                         <div id="color-dot" class="w-3 h-3 rounded-full border border-white/20"></div>
                     </div>
+
                     <button onclick="resetAll()" class="text-[10px] text-zinc-500 hover:text-white flex items-center gap-1 bg-zinc-900 px-2 py-1 rounded">
                         <i class="fas fa-redo"></i> 重置
                     </button>
@@ -77,20 +86,20 @@
                 <div class="flex-1 flex flex-col justify-center gap-4">
                     <div class="flex items-center gap-3">
                         <span class="text-[10px] text-zinc-500 w-16 text-right font-bold">CN (花瓣)</span>
-                        <input type="text" id="cn-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-emerald-500 outline-none transition" placeholder="等待分析...">
+                        <input type="text" id="cn-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-pink-500 outline-none transition" placeholder="AI 准备中...">
                     </div>
                     <div class="flex items-center gap-3">
                         <span class="text-[10px] text-zinc-500 w-16 text-right font-bold">EN (Eagle)</span>
-                        <input type="text" id="en-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-emerald-500 outline-none transition" placeholder="等待分析...">
+                        <input type="text" id="en-keywords" class="flex-1 bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-xs text-white focus:border-pink-500 outline-none transition" placeholder="AI Ready...">
                     </div>
                 </div>
                 
                 <div class="mt-4 flex justify-between items-center">
                     <div class="flex items-center gap-2 text-[10px] text-zinc-500">
                         <i class="fas fa-info-circle"></i>
-                        <span>不满意？按住左侧预览图 <b class="text-emerald-400">拖入 Eagle</b></span>
+                        <span>支持将左侧图 <b class="text-pink-400">拖入 Eagle 搜索框</b></span>
                     </div>
-                    <button onclick="refreshLinks()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-4 py-2 rounded font-bold shadow-lg shadow-emerald-900/50 transition">
+                    <button onclick="refreshLinks()" class="bg-pink-600 hover:bg-pink-500 text-white text-xs px-4 py-2 rounded font-bold shadow-lg shadow-pink-900/50 transition">
                         <i class="fas fa-sync-alt"></i> 刷新搜索
                     </button>
                 </div>
@@ -99,12 +108,12 @@
 
         <section class="border-t border-zinc-900 pt-6 transition-all duration-300">
             <h2 class="text-xs font-bold text-zinc-500 mb-4 flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Eagle 本地库 (127.0.0.1 直连)
+                <span class="w-2 h-2 rounded-full bg-pink-500 animate-pulse"></span> Eagle 本地库 (Blob 渲染)
             </h2>
-            <div id="results-grid" class="grid grid-cols-2 md:grid-cols-6 gap-4 min-h-[100px]">
+            <div id="results-grid" class="grid grid-cols-2 md:grid-cols-6 lg:grid-cols-8 gap-4 min-h-[100px]">
                 <div class="col-span-full text-center py-10 text-zinc-700 text-xs">
                     等待图片上传...<br>
-                    <span class="text-emerald-500 mt-2 block opacity-80">(若不显示，请检查 Eagle Token)</span>
+                    <span class="text-pink-500 mt-2 block opacity-80">(若无结果，请检查 Token 并开启 API)</span>
                 </div>
             </div>
         </section>
@@ -134,47 +143,45 @@
 
     <div id="settings-panel" class="settings-panel fixed top-0 right-0 h-full w-[450px] bg-[#0d0d0d] border-l border-zinc-800 z-50 p-6 shadow-2xl flex flex-col gap-4 overflow-y-auto">
         <div class="flex justify-between items-center">
-            <h2 class="font-bold text-white">⚙️ 安全配置中心</h2>
+            <h2 class="font-bold text-white">⚙️ 强力配置</h2>
             <button onclick="toggleSettings()" class="text-zinc-500 hover:text-white">✕</button>
         </div>
         
-        <div class="p-3 bg-blue-900/20 border border-blue-700/50 rounded mb-2">
-            <p class="text-[10px] text-blue-300">💡 提示：API Key 现在存储在您的本地浏览器中。请勿将此 HTML 文件发布到 Vercel 或 GitHub，否则 Key 仍有泄露风险。</p>
-        </div>
-
         <div class="p-3 bg-zinc-900 border border-zinc-700 rounded">
-            <label class="text-xs font-bold text-emerald-400 block mb-2">Google API Key (本地存储)</label>
-            <input type="text" id="api-key-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white font-mono mb-2" placeholder="在此粘贴你的 Key (AIzaSy...)">
+            <label class="text-xs font-bold text-pink-400 block mb-2">Google API Key (本地存储)</label>
+            <input type="text" id="api-key-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white font-mono mb-2" placeholder="AIzaSy...">
             
-            <label class="text-xs font-bold text-emerald-400 block mb-2">Base URL (代理地址)</label>
+            <label class="text-xs font-bold text-pink-400 block mb-2">Base URL (代理地址)</label>
             <input type="text" id="base-url-input" class="w-full bg-black border border-zinc-700 rounded p-2 text-xs text-white font-mono" placeholder="https://generativelanguage.googleapis.com">
         </div>
 
         <div class="p-3 bg-red-900/20 border border-red-700/50 rounded">
-            <label class="block text-xs font-bold text-red-400 mb-1">Eagle API Token (必填)</label>
-            <input type="text" id="eagle-token-input" class="w-full bg-black border border-red-700 rounded p-2 text-xs text-white font-mono" placeholder="粘贴 Eagle Token">
-            <button onclick="checkEagleStatus()" class="mt-2 w-full text-[10px] bg-red-800 text-white py-1 rounded">🔌 测试 Eagle 连接</button>
+            <label class="block text-xs font-bold text-red-400 mb-1">Eagle Token (必填)</label>
+            <p class="text-[10px] text-zinc-400 mb-2">Eagle > 偏好设置 > 开发者 > 开启 API > 复制 Token</p>
+            <input type="text" id="eagle-token-input" class="w-full bg-black border border-red-700 rounded p-2 text-xs text-white font-mono" placeholder="粘贴 Token...">
+            <button onclick="checkEagleStatus()" class="mt-2 w-full text-[10px] bg-red-800 text-white py-1 rounded">🔌 测试连接</button>
         </div>
 
         <div class="flex-1 flex flex-col min-h-[150px]">
             <div class="flex justify-between items-center mb-2">
                 <label class="block text-xs font-bold text-zinc-500">模型列表</label>
-                <button onclick="autoDiscoverModel()" class="text-[10px] text-emerald-400 hover:text-emerald-300">⚡ 自动检测模型</button>
+                <button onclick="autoDiscoverModel()" class="text-[10px] text-pink-400 hover:text-pink-300">⚡ 重新扫描</button>
             </div>
             <div id="model-list" class="flex-1 bg-zinc-900 border border-zinc-700 rounded overflow-y-auto"></div>
         </div>
         
         <div class="console-box" id="debug-log">Log initialized.</div>
 
-        <button onclick="saveSettings()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-sm font-bold">保存配置</button>
+        <button onclick="saveSettings()" class="w-full py-3 bg-pink-600 hover:bg-pink-500 text-white rounded text-sm font-bold">保存并应用</button>
     </div>
     <div id="settings-overlay" onclick="toggleSettings()" class="fixed inset-0 bg-black/50 z-40 hidden backdrop-blur-sm"></div>
 
     <script>
+        const DEFAULT_KEY = "AIzaSyB1mVPeECC27nWMhn49NBOT8_-PIJQmmEI";
         const EAGLE_API_URL = "http://127.0.0.1:41595";
         
         let CONFIG = {
-            apiKey: "", // 默认为空，强制用户输入
+            apiKey: "",
             baseUrl: "https://generativelanguage.googleapis.com", 
             endpoint: "",
             eagleToken: ""
@@ -183,141 +190,67 @@
         let targetColorRGB = null;
 
         function init() {
-            // 从 LocalStorage 读取配置
-            if(localStorage.getItem('motiflow_v32')) {
-                const saved = JSON.parse(localStorage.getItem('motiflow_v32'));
-                if(saved.apiKey) CONFIG.apiKey = saved.apiKey;
+            if(localStorage.getItem('motiflow_v34')) {
+                const saved = JSON.parse(localStorage.getItem('motiflow_v34'));
                 if(saved.baseUrl) CONFIG.baseUrl = saved.baseUrl;
                 if(saved.endpoint) CONFIG.endpoint = saved.endpoint;
                 if(saved.eagleToken) CONFIG.eagleToken = saved.eagleToken;
-            } else {
-                // 第一次打开，弹出设置框
-                setTimeout(() => {
-                    alert("欢迎使用 V32 安全版！\n\n请点击右上角【设置】，填入您的 Google API Key 和 Eagle Token。\n这些信息只会保存在您的电脑上，不会上传。");
-                    toggleSettings();
-                }, 500);
+                // CONFIG.apiKey = saved.apiKey; 
             }
+            CONFIG.apiKey = DEFAULT_KEY; // 强制代码内Key
             
-            // 填充 UI
             document.getElementById('api-key-input').value = CONFIG.apiKey;
             document.getElementById('base-url-input').value = CONFIG.baseUrl;
             document.getElementById('eagle-token-input').value = CONFIG.eagleToken;
             
             checkEagleStatus();
-            
-            if (CONFIG.apiKey && !CONFIG.endpoint) {
-                autoDiscoverModel();
-            } else if (CONFIG.apiKey) {
-                updateModelLabel();
-                scanModelList(true);
-            }
+            if (!CONFIG.endpoint) autoDiscoverModel();
+            else { updateModelLabel(); scanModelList(true); }
         }
 
+        // --- 1. 自动模型发现 ---
         async function autoDiscoverModel() {
-            if(!CONFIG.apiKey) return;
-            log("正在自动扫描可用模型...");
-            document.getElementById('current-model-name').innerText = "扫描中...";
-            
+            log("扫描可用模型...");
             try {
                 const url = `${CONFIG.baseUrl}/v1beta/models?key=${CONFIG.apiKey}`;
                 const res = await fetch(url);
                 const data = await res.json();
-                
                 if (data.models) {
-                    const candidates = data.models.filter(m => 
-                        m.supportedGenerationMethods?.includes('generateContent') && 
-                        !m.name.includes('banana') &&
-                        !m.name.includes('gemma') 
-                    );
-                    
-                    if(candidates.length > 0) {
-                        let bestMatch = candidates.find(m => m.name.includes('flash-latest')) || 
-                                        candidates.find(m => m.name.includes('flash')) || 
-                                        candidates[0];
-                                        
-                        const name = bestMatch.name.replace('models/', '');
-                        CONFIG.endpoint = `/v1beta/models/${name}:generateContent`;
-                        
-                        log(`✅ 自动选中: ${name}`, 'suc');
-                        updateModelLabel();
-                        scanModelList(true);
-                        saveSettings(true);
-                        return;
-                    }
+                    const best = data.models.find(m => m.name.includes('flash')) || data.models[0];
+                    CONFIG.endpoint = `/v1beta/models/${best.name.replace('models/', '')}:generateContent`;
+                    log(`✅ 自动选中: ${best.name}`, 'suc');
+                    updateModelLabel();
+                    scanModelList(true);
+                    saveSettings(true);
                 }
-                throw new Error("无可用模型");
-            } catch(e) {
-                log(`扫描失败: ${e.message}`, 'err');
-                document.getElementById('current-model-name').innerText = "连接失败";
-                document.getElementById('ai-status-dot').className = "w-2 h-2 rounded-full bg-red-500";
-            }
+            } catch(e) { log(`扫描失败: ${e.message}`, 'err'); }
         }
 
         function updateModelLabel() {
-            const name = CONFIG.endpoint.match(/models\/(.*?):/)?.[1] || "未连接";
+            const name = CONFIG.endpoint.match(/models\/(.*?):/)?.[1] || "Unknown";
             document.getElementById('current-model-name').innerText = name;
             document.getElementById('ai-status-dot').className = "w-2 h-2 rounded-full bg-green-500";
         }
 
-        async function scanModelList(silent = false) {
-            const list = document.getElementById('model-list');
-            try {
-                const res = await fetch(`${CONFIG.baseUrl}/v1beta/models?key=${CONFIG.apiKey}`);
-                const data = await res.json();
-                list.innerHTML = "";
-                data.models.forEach(m => {
-                    if(m.supportedGenerationMethods?.includes('generateContent')) {
-                        const name = m.name.replace('models/', '');
-                        const div = document.createElement('div');
-                        const isActive = CONFIG.endpoint.includes(name);
-                        div.className = `model-item ${isActive ? 'active' : ''}`;
-                        div.innerHTML = `<span>${name}</span>`;
-                        div.onclick = () => {
-                            CONFIG.endpoint = `/v1beta/models/${name}:generateContent`;
-                            updateModelLabel();
-                            document.querySelectorAll('.model-item').forEach(e => e.classList.remove('active'));
-                            div.classList.add('active');
-                        };
-                        list.appendChild(div);
-                    }
-                });
-            } catch(e) { if(!silent) log("List error: " + e.message); }
-        }
-
+        // --- 2. Eagle 连接 ---
         async function checkEagleStatus() {
-            if(!CONFIG.eagleToken) {
-                document.getElementById('eagle-status-text').innerText = "Eagle: 无 Token";
-                return;
-            }
+            if(!CONFIG.eagleToken) return;
             try {
                 const res = await fetch(`${EAGLE_API_URL}/api/application/info?token=${CONFIG.eagleToken}`);
                 if(res.ok) {
                     document.getElementById('eagle-status-dot').className = "w-2 h-2 rounded-full bg-green-500";
                     document.getElementById('eagle-status-text').innerText = "Eagle: 在线";
                     log("Eagle Connected.", "suc");
-                } else { throw new Error("401"); }
+                } else throw new Error("401");
             } catch(e) {
                 document.getElementById('eagle-status-dot').className = "w-2 h-2 rounded-full bg-red-500";
                 document.getElementById('eagle-status-text').innerText = "Eagle: 离线";
             }
         }
 
-        function toggleSettings() {
-            document.getElementById('settings-panel').classList.toggle('open');
-            document.getElementById('settings-overlay').classList.toggle('hidden');
-        }
-
-        function log(msg, type='info') {
-            const box = document.getElementById('debug-log');
-            const cls = type === 'err' ? 'log-err' : (type === 'suc' ? 'log-suc' : '');
-            box.innerHTML += `<div class="${cls}">> ${msg}</div>`;
-            box.scrollTop = box.scrollHeight;
-        }
-
-        // --- 核心上传 ---
+        // --- 3. 核心上传 ---
         async function handleFiles(file) {
-            if(!CONFIG.apiKey) { alert("请先在设置中填写 API Key"); toggleSettings(); return; }
-            if(!CONFIG.endpoint) { await autoDiscoverModel(); }
+            if(!CONFIG.endpoint) await autoDiscoverModel();
             
             const url = URL.createObjectURL(file);
             const img = document.getElementById('preview-thumb');
@@ -326,10 +259,9 @@
             document.getElementById('upload-hint').classList.add('hidden');
             img.onload = () => { extractColor(img); };
 
-            document.getElementById('cn-keywords').value = ""; 
-            document.getElementById('en-keywords').value = "";
-            document.getElementById('cn-keywords').placeholder = "连接 AI...";
-            document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-emerald-500 animate-pulse text-xs">正在请求...</div>';
+            document.getElementById('cn-keywords').placeholder = "Connecting...";
+            document.getElementById('en-keywords').placeholder = "Connecting...";
+            document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-pink-500 animate-pulse text-xs">AI 识别中...</div>';
 
             try {
                 const base64 = await toBase64(file);
@@ -337,28 +269,20 @@
 {"cn": "Chinese Keywords for Huaban", "en": "English Keywords for ArtStation"}
 `;
                 
-                const reqUrl = `${CONFIG.baseUrl}${CONFIG.endpoint}?key=${CONFIG.apiKey}`;
-                
-                const res = await fetch(reqUrl, {
+                const res = await fetch(`${CONFIG.baseUrl}${CONFIG.endpoint}?key=${CONFIG.apiKey}`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
-                        contents: [{ parts: [
-                            { text: prompt },
-                            { inline_data: { mime_type: "image/jpeg", data: base64.split(',')[1] } }
-                        ]}],
+                        contents: [{ parts: [ { text: prompt }, { inline_data: { mime_type: "image/jpeg", data: base64.split(',')[1] } } ]}],
                         safetySettings: [{ category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" }]
                     })
                 });
 
                 const raw = await res.text();
-                if(!res.ok) throw new Error(`API Error ${res.status}`);
+                if(!res.ok) throw new Error(res.status);
 
                 let result = { cn: "特效", en: "VFX" };
-                try {
-                    let jsonStr = raw.match(/\{[\s\S]*\}/)?.[0] || raw;
-                    result = JSON.parse(jsonStr);
-                } catch(e) { log("JSON Parse Warning"); }
+                try { result = JSON.parse(raw.match(/\{[\s\S]*\}/)?.[0] || raw); } catch(e) {}
 
                 document.getElementById('cn-keywords').value = result.cn || "特效";
                 document.getElementById('en-keywords').value = result.en || "VFX";
@@ -370,29 +294,15 @@
             }
         }
 
-        // --- 辅助逻辑 ---
-        function refreshLinks(keywordOverride) {
-            const cn = document.getElementById('cn-keywords').value.trim();
-            const en = document.getElementById('en-keywords').value.trim();
-            const query = keywordOverride || en;
-
-            document.getElementById('link-huaban').href = `https://huaban.com/search/?q=${encodeURIComponent(cn)}`;
-            document.getElementById('link-pinterest').href = `https://www.pinterest.com/search/pins/?q=${encodeURIComponent(en)}`;
-            document.getElementById('link-artstation').href = `https://www.artstation.com/search?sort_by=relevance&query=${encodeURIComponent(en)}`;
-            document.getElementById('link-bilibili').href = `https://search.bilibili.com/all?keyword=${encodeURIComponent(cn + " 教程")}`;
-
-            searchEagle(query);
-        }
-
+        // --- 4. Eagle 搜索 (强制 Blob 渲染) ---
         async function searchEagle(keyword) {
             if(!CONFIG.eagleToken) {
-                document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-red-500 text-xs">请先设置 Eagle Token</div>';
-                toggleSettings();
+                document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-red-500 text-xs">未设置 Token</div>';
                 return;
             }
 
             const grid = document.getElementById('results-grid');
-            grid.innerHTML = '<div class="col-span-full text-center py-10 text-zinc-500 text-xs">本地搜索中...</div>';
+            grid.innerHTML = '<div class="col-span-full text-center py-10 text-zinc-500 text-xs">搜索本地库...</div>';
             
             try {
                 let apiUrl = `${EAGLE_API_URL}/api/item/list?keyword=${encodeURIComponent(keyword)}&limit=100&token=${CONFIG.eagleToken}`;
@@ -401,6 +311,7 @@
                 
                 if(json.data && json.data.length > 0) {
                     let items = json.data;
+                    // 颜色排序
                     if (targetColorRGB) {
                         items.forEach(item => {
                             if (item.palettes && item.palettes.length > 0) {
@@ -411,25 +322,51 @@
                         items.sort((a, b) => a.colorDist - b.colorDist);
                     }
 
-                    grid.innerHTML = items.slice(0, 18).map(item => {
-                        const thumbUrl = `${EAGLE_API_URL}/api/item/thumbnail?id=${item.id}&token=${CONFIG.eagleToken}&t=${Date.now()}`;
+                    // 渲染列表 (限制前18个)
+                    const renderedItems = await Promise.all(items.slice(0, 18).map(async item => {
+                        // 核心黑科技: 强制 Fetch 图片数据转 Blob
+                        const imgUrl = `${EAGLE_API_URL}/api/item/thumbnail?id=${item.id}&token=${CONFIG.eagleToken}`;
+                        let blobUrl = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMCAwaDI0djI0SDB6IiBmaWxsPSJub25lIi8+PC9zdmc+"; // 默认占位
+                        
+                        try {
+                            const imgRes = await fetch(imgUrl);
+                            if(imgRes.ok) {
+                                const blob = await imgRes.blob();
+                                blobUrl = URL.createObjectURL(blob);
+                            }
+                        } catch(e) { console.warn("Img load fail", item.id); }
+
                         return `
-                        <div class="bg-zinc-900 rounded overflow-hidden cursor-pointer opacity-90 hover:opacity-100 transition border border-zinc-800 hover:border-emerald-500 relative group" onclick="window.open('eagle://item/${item.id}')">
+                        <div class="bg-zinc-900 rounded overflow-hidden cursor-pointer opacity-90 hover:opacity-100 transition border border-zinc-800 hover:border-pink-500 relative group" onclick="window.open('eagle://item/${item.id}')">
                             <div class="aspect-square relative">
-                                <img src="${thumbUrl}" class="w-full h-full object-cover" referrerpolicy="no-referrer" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMCAwaDI0djI0SDB6IiBmaWxsPSJub25lIi8+PHBhdGggZmlsbD0iIzMzMyIgZD0iTTE5IDV2MTRINVY1aDE0bTEtMmgtMnYyaDJINXYtMmgxOHptLTE2IDJ2MTRoLTIvdi0yaDE0aC0yIi8+PC9zdmc+'">
+                                <img src="${blobUrl}" class="eagle-img" onload="this.classList.add('loaded')">
                             </div>
                             <div class="p-1 text-[9px] text-zinc-400 truncate">${item.name}</div>
                         </div>
-                    `}).join('');
+                    `;
+                    }));
+                    
+                    grid.innerHTML = renderedItems.join('');
+                    
                 } else {
-                    grid.innerHTML = '<div class="col-span-full text-center py-10 text-zinc-600 text-xs">本地无结果，把左侧图拖入 Eagle 试试</div>';
+                    grid.innerHTML = '<div class="col-span-full text-center py-10 text-zinc-600 text-xs">本地无结果</div>';
                 }
             } catch(e) {
-                grid.innerHTML = `<div class="col-span-full text-center py-10 text-red-500 text-xs">Eagle 连接错误: ${e.message}</div>`;
+                grid.innerHTML = `<div class="col-span-full text-center py-10 text-red-500 text-xs">连接错误: ${e.message}</div>`;
             }
         }
 
-        // 颜色算法
+        // --- 辅助函数 ---
+        function refreshLinks(k) {
+            const cn = document.getElementById('cn-keywords').value.trim();
+            const en = document.getElementById('en-keywords').value.trim();
+            document.getElementById('link-huaban').href = `https://huaban.com/search/?q=${encodeURIComponent(cn)}`;
+            document.getElementById('link-pinterest').href = `https://www.pinterest.com/search/pins/?q=${encodeURIComponent(en)}`;
+            document.getElementById('link-artstation').href = `https://www.artstation.com/search?sort_by=relevance&query=${encodeURIComponent(en)}`;
+            document.getElementById('link-bilibili').href = `https://search.bilibili.com/all?keyword=${encodeURIComponent(cn + " 教程")}`;
+            searchEagle(k || en);
+        }
+
         function extractColor(img) {
             const c = document.createElement('canvas'); const x = c.getContext('2d');
             c.width = 1; c.height = 1; x.drawImage(img,0,0,1,1);
@@ -440,16 +377,23 @@
         }
         function getColorDistance(c1, c2) { return Math.sqrt(Math.pow(c1.r-c2.r,2)+Math.pow(c1.g-c2.g,2)+Math.pow(c1.b-c2.b,2)); }
         function hexToRgb(hex) { var r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex); return r ? {r:parseInt(r[1],16),g:parseInt(r[2],16),b:parseInt(r[3],16)} : null; }
-
-        function saveSettings(silent = false) {
-            CONFIG.apiKey = document.getElementById('api-key-input').value.trim();
+        
+        function toggleSettings() {
+            document.getElementById('settings-panel').classList.toggle('open');
+            document.getElementById('settings-overlay').classList.toggle('hidden');
+        }
+        function log(msg, type='info') {
+            const box = document.getElementById('debug-log');
+            box.innerHTML += `<div class="${type==='err'?'log-err':(type==='suc'?'log-suc':'')}">> ${msg}</div>`;
+            box.scrollTop = box.scrollHeight;
+        }
+        function saveSettings(silent) {
             CONFIG.baseUrl = document.getElementById('base-url-input').value.trim().replace(/\/$/, "");
             CONFIG.eagleToken = document.getElementById('eagle-token-input').value.trim();
-            localStorage.setItem('motiflow_v32', JSON.stringify(CONFIG));
-            if(!silent) { alert("配置已保存到本地"); toggleSettings(); }
+            localStorage.setItem('motiflow_v34', JSON.stringify(CONFIG));
+            if(!silent) { alert("保存成功"); toggleSettings(); }
             checkEagleStatus();
         }
-
         function resetAll() {
             document.getElementById('cn-keywords').value = "";
             document.getElementById('en-keywords').value = "";
@@ -457,11 +401,32 @@
             document.getElementById('upload-hint').classList.remove('hidden');
             document.getElementById('results-grid').innerHTML = '<div class="col-span-full text-center py-10 text-zinc-700 text-xs">等待上传...</div>';
         }
+        async function scanModelList(silent=false) {
+             const list = document.getElementById('model-list');
+             try {
+                 const res = await fetch(`${CONFIG.baseUrl}/v1beta/models?key=${CONFIG.apiKey}`);
+                 const data = await res.json();
+                 list.innerHTML = "";
+                 data.models.forEach(m => {
+                     if(m.supportedGenerationMethods?.includes('generateContent') && !m.name.includes('banana')) {
+                         const name = m.name.replace('models/','');
+                         const div = document.createElement('div');
+                         div.className = `model-item ${CONFIG.endpoint.includes(name)?'active':''}`;
+                         div.innerHTML = `<span>${name}</span>`;
+                         div.onclick = () => { CONFIG.endpoint = `/v1beta/models/${name}:generateContent`; saveSettings(); };
+                         list.appendChild(div);
+                     }
+                 });
+             } catch(e){}
+        }
         function toBase64(file) { return new Promise((r) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => r(reader.result); }); }
         
         const dropArea = document.getElementById('drop-area');
         const fileInput = document.getElementById('file-input');
-        function triggerUpload() { fileInput.click(); }
+        function triggerUpload() { if(!document.getElementById('preview-thumb').src) fileInput.click(); }
+        // 点击预览图本身不触发上传
+        document.getElementById('preview-thumb').addEventListener('click', (e) => e.stopPropagation());
+
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => dropArea.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); }));
         dropArea.addEventListener('drop', e => { if(e.dataTransfer.files.length) handleFiles(e.dataTransfer.files[0]); });
         fileInput.addEventListener('change', e => { if(e.target.files.length) handleFiles(e.target.files[0]); });
