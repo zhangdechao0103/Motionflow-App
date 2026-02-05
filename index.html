@@ -3,23 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="referrer" content="no-referrer">
-    <title>Motiflow VFX - 无限流引擎</title>
+    <title>Motiflow VFX - 鹰眼视觉版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: #050505; color: #e0e0e0; }
         .glass { background: rgba(18, 18, 18, 0.9); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        
-        /* 霓虹强调色 */
-        .accent-cyan { color: #00e5ff; text-shadow: 0 0 15px rgba(0, 229, 255, 0.5); }
-        
-        /* 卡片交互 */
-        .vfx-card { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #222; }
-        .vfx-card:hover { transform: translateY(-4px); border-color: #00e5ff; box-shadow: 0 10px 30px -10px rgba(0, 229, 255, 0.3); z-index: 10; }
-
-        /* 底部加载动画 */
-        .loader { width: 8px; height: 8px; border-radius: 50%; background-color: #00e5ff; box-shadow: 32px 0 #00e5ff, -32px 0 #00e5ff; position: relative; animation: flash 0.5s ease-out infinite alternate; display: none; margin: 40px auto; }
-        @keyframes flash { 0% { background-color: #333; box-shadow: 32px 0 #333, -32px 0 #333; } 50% { background-color: #00e5ff; box-shadow: 32px 0 #333, -32px 0 #333; } 100% { background-color: #333; box-shadow: 32px 0 #00e5ff, -32px 0 #333; } }
-        
+        .accent-gold { color: #ffd700; text-shadow: 0 0 15px rgba(255, 215, 0, 0.5); }
+        .vfx-card { transition: all 0.2s; border: 1px solid #222; }
+        .vfx-card:hover { transform: translateY(-4px); border-color: #ffd700; box-shadow: 0 10px 30px -10px rgba(255, 215, 0, 0.2); z-index: 10; }
+        .loader { width: 8px; height: 8px; border-radius: 50%; background-color: #ffd700; box-shadow: 32px 0 #ffd700, -32px 0 #ffd700; position: relative; animation: flash 0.5s ease-out infinite alternate; display: none; margin: 40px auto; }
+        @keyframes flash { 0% { background-color: #333; box-shadow: 32px 0 #333, -32px 0 #333; } 100% { background-color: #333; box-shadow: 32px 0 #ffd700, -32px 0 #333; } }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 100; opacity: 0; transition: opacity 0.2s; }
         .modal.active { display: flex; opacity: 1; }
     </style>
@@ -28,21 +21,26 @@
 
     <nav class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b border-white/5">
         <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-cyan-600 rounded flex items-center justify-center font-bold text-black shadow-[0_0_15px_rgba(6,182,212,0.5)]">∞</div>
-            <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-cyan-500 font-normal">| INFINITY</span></span>
+            <div class="w-8 h-8 bg-amber-500 rounded flex items-center justify-center font-bold text-black shadow-[0_0_15px_rgba(245,158,11,0.5)]">👁️</div>
+            <span class="text-lg font-bold tracking-tight text-white">MOTIFLOW <span class="text-amber-500 font-normal">| EAGLE EYE</span></span>
         </div>
         <div class="text-[10px] text-zinc-500 font-mono flex items-center gap-2">
-            <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> AUTO-SCROLL ACTIVE
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> AI VISION V2.0
         </div>
     </nav>
 
     <header class="max-w-4xl mx-auto pt-16 pb-8 px-6">
-        <div id="drop-zone" class="relative p-10 border border-dashed border-zinc-700 rounded-2xl bg-zinc-900/40 text-center hover:border-cyan-500/50 hover:bg-zinc-900/60 transition-all duration-300 cursor-pointer group">
+        <div id="drop-zone" class="relative p-10 border border-dashed border-zinc-700 rounded-2xl bg-zinc-900/40 text-center hover:border-amber-500/50 hover:bg-zinc-900/60 transition-all duration-300 cursor-pointer group">
             <input type="file" id="file-input" class="hidden" accept="image/*">
             <div id="status-ui">
-                <div class="text-5xl mb-4 opacity-80 group-hover:scale-110 transition duration-300 drop-shadow-[0_0_20px_rgba(0,229,255,0.4)]">📡</div>
-                <h2 class="text-xl font-bold mb-2 text-white">上传参考图</h2>
-                <p class="text-zinc-500 text-sm font-mono">AI 分析 -> 无限瀑布流加载</p>
+                <div class="text-5xl mb-4 opacity-80 group-hover:scale-110 transition duration-300 drop-shadow-[0_0_20px_rgba(251,191,36,0.4)]">🧿</div>
+                <h2 class="text-xl font-bold mb-2 text-white">上传任意参考图</h2>
+                <p class="text-amber-200/50 text-sm font-mono">AI 自动识别特效元素 -> 精准组合搜索</p>
+            </div>
+            
+            <div id="analysis-result" class="hidden mt-6 pt-4 border-t border-white/5">
+                <p class="text-[10px] text-zinc-500 uppercase tracking-widest mb-2">AI DETECTED ELEMENTS:</p>
+                <div id="detected-tags" class="flex flex-wrap justify-center gap-2 text-xs font-mono text-amber-400"></div>
             </div>
         </div>
 
@@ -73,9 +71,8 @@
     </header>
 
     <main class="max-w-[1600px] mx-auto px-6 pb-20">
-        <div id="results-title" class="hidden text-sm font-bold text-zinc-500 mb-4 border-l-2 border-cyan-500 pl-3">REAL-TIME RESULTS</div>
-        <div id="results-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            </div>
+        <div id="results-title" class="hidden text-sm font-bold text-zinc-500 mb-4 border-l-2 border-amber-500 pl-3">PRECISE MATCH RESULTS</div>
+        <div id="results-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
         <div id="scroll-loader" class="loader"></div>
     </main>
 
@@ -85,12 +82,8 @@
                 <img id="modal-img" class="w-full h-full object-contain">
             </div>
             <div class="mt-6 flex gap-4">
-                <a id="source-btn" href="#" target="_blank" class="px-6 py-3 bg-zinc-800 hover:bg-white hover:text-black text-white rounded font-bold text-sm transition flex items-center gap-2 border border-zinc-700">
-                    🔗 访问来源网站
-                </a>
-                <button onclick="saveToEagle()" class="px-6 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded font-bold text-sm shadow-[0_0_20px_rgba(8,145,178,0.4)] transition">
-                    ⬇ 保存到 Eagle
-                </button>
+                <a id="source-btn" href="#" target="_blank" class="px-6 py-3 bg-zinc-800 hover:bg-white hover:text-black text-white rounded font-bold text-sm transition flex items-center gap-2 border border-zinc-700">🔗 访问来源网站</a>
+                <button onclick="saveToEagle()" class="px-6 py-3 bg-amber-600 hover:bg-amber-500 text-white rounded font-bold text-sm shadow-[0_0_20px_rgba(245,158,11,0.4)] transition">⬇ 保存到 Eagle</button>
                 <button onclick="closeModal()" class="w-12 h-12 rounded-full border border-white/20 hover:bg-white/10 text-white transition flex items-center justify-center">✕</button>
             </div>
         </div>
@@ -100,13 +93,11 @@
         const GEMINI_KEY = "AIzaSyB9ww1axSGsO4iYUt9UaOOJiBAuoa0wYOQ";
         const TENOR_KEY = "LIVDSRZULELA"; 
 
-        // 全局状态
         let currentImgUrl = "";
         let currentQuery = "";
-        let nextCursor = ""; // Tenor 分页指针
-        let isLoading = false; // 防止重复加载
+        let nextCursor = "";
+        let isLoading = false;
 
-        // DOM
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
         const statusUi = document.getElementById('status-ui');
@@ -116,8 +107,9 @@
         const resultsGrid = document.getElementById('results-grid');
         const resultsTitle = document.getElementById('results-title');
         const scrollLoader = document.getElementById('scroll-loader');
+        const analysisResult = document.getElementById('analysis-result');
+        const detectedTags = document.getElementById('detected-tags');
 
-        // 事件监听
         dropZone.onclick = () => fileInput.click();
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => {
             dropZone.addEventListener(e, ev => { ev.preventDefault(); ev.stopPropagation(); });
@@ -125,28 +117,43 @@
         dropZone.addEventListener('drop', e => handleFile(e.dataTransfer.files[0]));
         fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
 
-        // --- 无限滚动监听 ---
         window.addEventListener('scroll', () => {
             if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
                 if (!isLoading && nextCursor && currentQuery) {
-                    searchTenor(currentQuery, true); // 加载下一页
+                    searchTenor(currentQuery, true);
                 }
             }
         });
 
         async function handleFile(file) {
             if (!file) return;
-            statusUi.innerHTML = `<div class="animate-spin text-4xl mb-4 text-cyan-500">⚙️</div><p class="text-cyan-500 font-bold uppercase tracking-widest text-xs">AI Deep Scan...</p>`;
+            statusUi.innerHTML = `<div class="animate-spin text-4xl mb-4 text-amber-500">🧿</div><p class="text-amber-500 font-bold uppercase tracking-widest text-xs">AI Vision Deep Scan...</p>`;
             resetState();
 
             try {
                 const base64 = await toBase64(file);
+                
+                // --- 核心升级：超级详细的 Prompt，只为游戏 VFX 设计 ---
+                const prompt = `
+                    Act as a Senior Game Technical Artist. Analyze this image deeply for VFX elements.
+                    
+                    I need you to extract 3 distinct search parameters:
+                    1. Main Element (e.g. Fire, Water, Lightning, Hologram, Sword Trail)
+                    2. Style/Vibe (e.g. Anime, Pixel Art, Low Poly, Realistic, Cyberpunk, Toon)
+                    3. Action/Motion (e.g. Explosion, Slash, Shield, Buff, Teleport)
+
+                    Output format (3 lines exactly):
+                    Line 1: A combined, precise English search string for a GIF engine. Combine the most prominent Element + Style + 'Gameplay VFX'. (e.g. 'Anime Fire Slash Gameplay VFX' or 'Pixel Art Explosion Gameplay VFX'). Exclude general words like 'Cool' or 'Nice'.
+                    Line 2: One highly specific Chinese keyword for Huaban (e.g. 二次元刀光特效, 像素爆炸特效, 赛博朋克全息UI).
+                    Line 3: One highly specific Chinese keyword for Bilibili (e.g. Unity 刀光教程, UE5 粒子特效实战).
+                `;
+
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         contents: [{ parts: [
-                            { text: "Analyze for Game VFX. Output 3 lines.\nLine 1: English keywords for GIF search (e.g. 'unity slash').\nLine 2: Chinese for Huaban (e.g. 刀光特效).\nLine 3: Chinese for Bilibili." },
+                            { text: prompt },
                             { inline_data: { mime_type: "image/jpeg", data: base64.split(',')[1] } }
                         ]}]
                     })
@@ -156,18 +163,22 @@
                 const data = await response.json();
                 const lines = data.candidates[0].content.parts[0].text.trim().split('\n');
                 
-                const eng = lines[0].replace(/Line 1:/i, '').trim();
+                const engQuery = lines[0].replace(/Line 1:/i, '').trim();
                 const cnHuaban = lines[1] ? lines[1].replace(/Line 2:/i, '').trim() : "游戏特效";
-                const cnBili = lines[2] ? lines[2].replace(/Line 3:/i, '').trim() : "特效教程";
+                const cnBili = lines[2] ? lines[2].replace(/Line 3:/i, '').trim() : "游戏特效教程";
 
-                statusUi.innerHTML = `<div class="text-4xl mb-4">✅</div><p class="text-zinc-400 font-bold text-xs">TARGET LOCKED</p>`;
-                updatePortals(eng, cnHuaban, cnBili);
+                // 展示 AI 分析出的关键词，让你知道它看懂了
+                analysisResult.classList.remove('hidden');
+                detectedTags.innerHTML = engQuery.split(' ').map(t => `<span class="bg-amber-900/30 px-2 py-1 rounded border border-amber-500/20">${t}</span>`).join('');
+
+                statusUi.innerHTML = `<div class="text-4xl mb-4">✅</div><p class="text-zinc-400 font-bold text-xs">MATCH FOUND</p>`;
+                updatePortals(engQuery, cnHuaban, cnBili);
                 
-                // 启动首次搜索
-                currentQuery = eng + " gameplay vfx"; // 强制加上后缀
+                currentQuery = engQuery; // 使用组合词进行搜索
                 searchTenor(currentQuery);
 
             } catch (err) {
+                console.error(err);
                 statusUi.innerHTML = `<div class="text-4xl mb-4 text-red-500">⚠️</div><p class="text-red-400 font-bold text-xs">CONNECTION FAILED</p>`;
                 manualBox.classList.remove('hidden');
             }
@@ -177,28 +188,25 @@
             const val = manualInput.value.trim();
             if (!val) return;
             resetState();
-            currentQuery = val + " gameplay vfx";
-            updatePortals(val, val, val);
+            currentQuery = val + " gameplay vfx"; // 手动搜索也强制加上后缀
+            updatePortals(val + " vfx", val, val + "教程");
             searchTenor(currentQuery);
             manualBox.classList.add('hidden');
             statusUi.innerHTML = `<div class="text-4xl mb-4">🔍</div><p class="text-zinc-400 font-bold text-xs">MANUAL: ${val}</p>`;
         }
 
-        // 核心：搜索 + 无限加载逻辑
         async function searchTenor(query, isAppend = false) {
             isLoading = true;
             scrollLoader.style.display = 'block';
 
             try {
+                // 搜索逻辑：查询词 + 强制过滤
                 let url = `https://g.tenor.com/v1/search?q=${encodeURIComponent(query)}&key=${TENOR_KEY}&limit=20&media_filter=minimal`;
-                if (isAppend && nextCursor) {
-                    url += `&pos=${nextCursor}`; // 加上分页指针
-                }
+                if (isAppend && nextCursor) url += `&pos=${nextCursor}`;
 
                 const res = await fetch(url);
                 const data = await res.json();
-                
-                nextCursor = data.next || ""; // 更新指针
+                nextCursor = data.next || "";
                 
                 if (data.results && data.results.length > 0) {
                     resultsTitle.classList.remove('hidden');
@@ -209,27 +217,22 @@
                         </div>
                     `).join('');
 
-                    if (isAppend) {
-                        resultsGrid.insertAdjacentHTML('beforeend', html);
-                    } else {
-                        resultsGrid.innerHTML = html;
-                    }
+                    if (isAppend) resultsGrid.insertAdjacentHTML('beforeend', html);
+                    else resultsGrid.innerHTML = html;
                 } else if (!isAppend) {
-                    resultsGrid.innerHTML = `<p class="col-span-full text-center text-zinc-600 py-4 text-xs">No Results.</p>`;
+                    resultsGrid.innerHTML = `<p class="col-span-full text-center text-zinc-600 py-10 text-xs">No strict matches found. Try broader keywords in the portals above.</p>`;
                 }
             } catch (e) {
-                if (!isAppend) resultsGrid.innerHTML = `<p class="col-span-full text-center text-zinc-600 py-4 text-xs">Tenor Service Unavailable.</p>`;
+                if (!isAppend) resultsGrid.innerHTML = `<p class="col-span-full text-center text-zinc-600 py-10 text-xs">Tenor Service Unavailable.</p>`;
             } finally {
                 isLoading = false;
                 scrollLoader.style.display = 'none';
             }
         }
 
-        // 打开预览 (新增 sourceUrl 参数)
         function openModal(url, sourceUrl) {
             currentImgUrl = url;
             document.getElementById('modal-img').src = url;
-            // 更新源网站按钮链接
             document.getElementById('source-btn').href = sourceUrl; 
             document.getElementById('preview-modal').classList.add('active');
         }
@@ -245,13 +248,17 @@
             document.getElementById('link-huaban').href = `https://huaban.com/search/?q=${encodeURIComponent(cnHuaban)}`;
             document.getElementById('text-bilibili').innerText = cnBili;
             document.getElementById('link-bilibili').href = `https://search.bilibili.com/all?keyword=${encodeURIComponent(cnBili)}`;
-            document.getElementById('text-pinterest').innerText = eng;
-            document.getElementById('link-pinterest').href = `https://www.pinterest.com/search/pins/?q=${encodeURIComponent(eng + " game vfx")}`;
+            
+            // Pinterest 搜索优化：去掉 'Gameplay VFX' 后缀，只留核心风格词，结果更准
+            const pinQuery = eng.replace('Gameplay VFX', '').trim();
+            document.getElementById('text-pinterest').innerText = pinQuery;
+            document.getElementById('link-pinterest').href = `https://www.pinterest.com/search/pins/?q=${encodeURIComponent(pinQuery + " game vfx reference")}`;
         }
 
         function resetState() {
             manualBox.classList.add('hidden');
             portalArea.classList.add('hidden');
+            analysisResult.classList.add('hidden');
             resultsGrid.innerHTML = "";
             resultsTitle.classList.add('hidden');
             nextCursor = "";
